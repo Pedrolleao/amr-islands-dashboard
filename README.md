@@ -1,5 +1,12 @@
 # AMR annotation project – folder guide
 
+> **Live dashboard: <https://pedrolleao.github.io/amr-islands-dashboard/>**
+> Interactive, self-contained pages over the *Citrobacter freundii* group (7,287 isolates):
+> [Islands](https://pedrolleao.github.io/amr-islands-dashboard/Citrobacter_freundii/Dashboard/islands.html) ·
+> [Gene families](https://pedrolleao.github.io/amr-islands-dashboard/Citrobacter_freundii/Dashboard/clusters.html) ·
+> [Antibiograms](https://pedrolleao.github.io/amr-islands-dashboard/Citrobacter_freundii/Dashboard/antibiograms.html).
+> No install needed; each page is a few MB and takes a moment to load. Source and build steps: [`Citrobacter_freundii/Dashboard/README.md`](Citrobacter_freundii/Dashboard/README.md).
+
 One folder per NCBI Pathogen Detection organism group; the same pipeline builds all of them.
 
 ```
