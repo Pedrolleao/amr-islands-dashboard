@@ -4,40 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AMR islands dashboard</title>
+<meta http-equiv="refresh" content="0; url=Citrobacter_freundii/Dashboard/islands.html">
+<link rel="canonical" href="Citrobacter_freundii/Dashboard/islands.html">
 <style>
-  :root { --bg:#fbfaf7; --fg:#1d1d1b; --muted:#5e5e58; --line:#d9d6cd; --accent:#b8503a; }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) { --bg:#15161a; --fg:#ebe8e0; --muted:#a39f94; --line:#34363c; --accent:#e9876f; }
-  }
-  :root[data-theme="dark"] { --bg:#15161a; --fg:#ebe8e0; --muted:#a39f94; --line:#34363c; --accent:#e9876f; }
-  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  main { max-width:720px; margin:0 auto; padding:48px 16px 64px; }
-  h1 { font-size:1.6rem; margin:0 0 .25rem; }
-  p.lead { color:var(--muted); margin:0 0 2rem; }
-  ul { list-style:none; padding:0; margin:0; }
-  li { border-top:1px solid var(--line); padding:18px 0; }
-  li:last-child { border-bottom:1px solid var(--line); }
-  a.page { font-weight:600; color:var(--accent); text-decoration:none; font-size:1.1rem; }
-  a.page:hover { text-decoration:underline; }
-  li p { margin:.3rem 0 0; color:var(--muted); }
-  footer { margin-top:2.5rem; color:var(--muted); font-size:.9rem; }
-  footer a { color:inherit; }
+  :root{--bg:#0E0E0E;--fg:#E5E5E5;--fg-mute:#888888;--border-strong:#3A3A3A;--c-teal:#6DC7C8;color-scheme:dark}
+  :root[data-theme="light"]{--bg:#FAFAF7;--fg:#1A1A1A;--fg-mute:#5C5C5C;--border-strong:#BDBDB7;--c-teal:#1D7677;color-scheme:light}
+  html{background:var(--bg);color:var(--fg);font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace}
+  body{margin:0;padding:27.5px 30px;font-size:15px;line-height:1.55;letter-spacing:.01em}
+  p{color:var(--fg-mute)}
+  a{color:var(--fg);text-decoration:none;border-bottom:1px solid var(--border-strong)}
+  a:hover{border-bottom-color:var(--c-teal)}
 </style>
+<script>try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 </head>
 <body>
-<main>
-  <h1>AMR islands dashboard</h1>
-  <p class="lead">Antimicrobial resistance, stress and virulence genes across 7,287 <em>Citrobacter freundii</em> group isolates
-  (NCBI Pathogen Detection PDG000000039.1314). Each page is self-contained and may take a few seconds to load.</p>
-  <ul>
-    <li><a class="page" href="Citrobacter_freundii/Dashboard/islands.html">Islands</a>
-      <p>Where each resistance gene sits: 46,921 islands with gene maps, architecture types and aligned views per family or antibiotic class.</p></li>
-    <li><a class="page" href="Citrobacter_freundii/Dashboard/clusters.html">Gene families</a>
-      <p>806 analysed families with predicted folds, per-position variation, Pfam domains and Foldseek matches; the whole pangenome searchable.</p></li>
-    <li><a class="page" href="Citrobacter_freundii/Dashboard/antibiograms.html">Antibiograms</a>
-      <p>Measured susceptibility for 75 isolates beside their resistance genotype, per antibiotic and per isolate.</p></li>
-  </ul>
-  <footer>Pipeline, documentation and build scripts: <a href="https://github.com/Pedrolleao/amr-islands-dashboard">github.com/Pedrolleao/amr-islands-dashboard</a></footer>
-</main>
+<p>Opening the dashboard… <a href="Citrobacter_freundii/Dashboard/islands.html">continue to islands</a></p>
 </body>
 </html>
