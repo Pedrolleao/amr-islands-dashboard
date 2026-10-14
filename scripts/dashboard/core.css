@@ -1,0 +1,226 @@
+/* core.css - the shared stylesheet (base 15px: every length is 1.25x the brand book's, which reads at 12px on a print-sized page but too small in a browser) of the three dashboard pages. Inlined by 35_build_pages.py.
+   Tokens and the .frame / .btn / .badge / .data-table components are the Simple brand book's
+   (design-system_Simple.html). Tabs, the segmented toggle, inputs and the rail are designed by
+   analogy from its segmented ctx-btn strip: one hairline, 1px dividers, active cell filled with
+   --highlight. No border radius, no shadows, no gradients; the only curve is the 7.5px status dot. */
+:root {
+  --bg:#0E0E0E; --bg-2:#161616; --highlight:#1F1F1F;
+  --fg:#E5E5E5; --fg-mute:#888888; --fg-dim:#555555;
+  --border:#2A2A2A; --border-strong:#3A3A3A;
+  --c-teal:#6DC7C8; --c-green:#61CA6E; --c-coral:#CE6A68; --c-purple:#B579CF; --c-mustard:#CDC37C;
+  --mono:'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  /* gene roles: identity is the stroke, the fill is a tint capped at 30% */
+  --r-mobile-f:rgba(206,106,104,.32); --r-mobile-s:#CE6A68;
+  --r-core-f:rgba(206,106,104,.12);   --r-core-s:#CE6A68;
+  --r-point-s:#CE6A68;
+  --r-stress-f:rgba(109,199,200,.30); --r-stress-s:#6DC7C8;
+  --r-vir-f:rgba(181,121,207,.30);    --r-vir-s:#B579CF;
+  --r-mge-f:rgba(205,195,124,.30);    --r-mge-s:#CDC37C;
+  --r-mge-ps-f:rgba(205,195,124,.10);
+  --r-other-f:#161616;                --r-other-s:#2A2A2A;
+  /* confidence buckets, captioned wherever they are used */
+  --q-lo:#CE6A68; --q-mid:#CDC37C; --q-hi:#6DC7C8; --q-top:#E5E5E5;
+  /* canvas and overlay inks: the tube outline (rgb triple + alpha scale) and the veil over a module's
+     out-of-range part of the ribbon */
+  --edge-rgb:0,0,0; --edge-k:1; --veil:rgba(14,14,14,.55);
+  color-scheme:dark;
+}
+/* light theme, switched by the sun/moon button (core.js) and applied before first paint by the
+   head script 35_build_pages.py inlines. Same roles, same token names: the brand book has no light
+   theme, so this one inverts the greys and darkens each accent until it holds 4.7:1 or better as
+   text on --bg and --bg-2 (the dark theme's --fg-dim is 2.6:1; here it is 3.3:1). */
+:root[data-theme="light"]{
+  --bg:#FAFAF7; --bg-2:#F1F1ED; --highlight:#E6E6E1;
+  --fg:#1A1A1A; --fg-mute:#5C5C5C; --fg-dim:#8A8A8A;
+  --border:#DDDDD8; --border-strong:#BDBDB7;
+  --c-teal:#1D7677; --c-green:#2B7A34; --c-coral:#B23B37; --c-purple:#7D45A0; --c-mustard:#76690F;
+  --r-mobile-f:rgba(178,59,55,.24);  --r-mobile-s:#B23B37;
+  --r-core-f:rgba(178,59,55,.08);    --r-core-s:#B23B37;
+  --r-point-s:#B23B37;
+  --r-stress-f:rgba(29,118,119,.20); --r-stress-s:#1D7677;
+  --r-vir-f:rgba(125,69,160,.20);    --r-vir-s:#7D45A0;
+  --r-mge-f:rgba(118,105,15,.20);    --r-mge-s:#76690F;
+  --r-mge-ps-f:rgba(118,105,15,.07);
+  --r-other-f:#F1F1ED;               --r-other-s:#BDBDB7;
+  --q-lo:#B23B37; --q-mid:#76690F; --q-hi:#1D7677; --q-top:#1A1A1A;
+  --edge-rgb:40,40,40; --edge-k:.5; --veil:rgba(250,250,247,.6);
+  color-scheme:light;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--bg);color:var(--fg);font-family:var(--mono);-webkit-font-smoothing:antialiased}
+body{font-size:15px;line-height:1.55;letter-spacing:.01em;padding:27.5px 30px 75px;min-height:100vh}
+a{color:inherit;text-decoration:none;border-bottom:1px solid var(--border-strong)}
+a:hover{border-bottom-color:var(--c-teal)}
+a.plain{border-bottom:none}
+b,strong{font-weight:500}
+button,input,select{font-family:inherit;font-size:inherit;color:inherit}
+::selection{background:var(--highlight)}
+.mute{color:var(--fg-mute)} .dim{color:var(--fg-dim)}
+.num{font-variant-numeric:tabular-nums}
+.up{text-transform:uppercase;letter-spacing:.12em;font-size:12.5px}
+.teal{color:var(--c-teal)} .green{color:var(--c-green)} .coral{color:var(--c-coral)} .purple{color:var(--c-purple)} .mustard{color:var(--c-mustard)}
+
+/* ------- top bar: identity left, page nav and counts right ------- */
+.topbar{display:grid;grid-template-columns:1fr auto;gap:17.5px;margin-bottom:20px}
+.topbar__id{border:1px solid var(--border);padding:17.5px 22.5px}
+.id__head{font-size:12.5px;text-transform:uppercase;color:var(--fg-mute);letter-spacing:.12em;margin-bottom:7.5px}
+.id__name{font-size:27.5px;font-weight:500;letter-spacing:-.01em;line-height:1.2}
+.id__name .light{color:var(--fg-mute);font-weight:300}
+.id__sub{color:var(--fg-mute);font-size:14px;margin-top:7.5px}
+.topbar__meta{border:1px solid var(--border);padding:17.5px 22.5px;min-width:375px;display:flex;flex-direction:column;justify-content:space-between;gap:12.5px}
+.meta__row{display:flex;justify-content:space-between;gap:20px;font-size:14px;color:var(--fg-mute)}
+.meta__row span:last-child{color:var(--fg)}
+.nav{display:flex;border:1px solid var(--border)}
+.nav a{flex:1;text-align:center;border-bottom:none;border-right:1px solid var(--border);padding:7.5px 12.5px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--fg-mute)}
+.nav a:last-child{border-right:none}
+.nav a:hover{color:var(--fg)}
+.nav a[aria-current="page"]{background:var(--highlight);color:var(--fg)}
+/* theme switch: the last cell of the nav strip, an icon showing the theme it switches TO */
+.nav .themebtn{flex:none;display:flex;align-items:center;justify-content:center;width:40px;background:transparent;border:none;color:var(--fg-mute);cursor:pointer;padding:0}
+.nav .themebtn:hover{color:var(--fg);background:var(--highlight)}
+.nav .themebtn:focus-visible{outline:none;box-shadow:inset 0 0 0 1px var(--c-teal)}
+.nav .themebtn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* ------- tabs: the same strip, larger ------- */
+.tabs{display:flex;border:1px solid var(--border);margin-bottom:17.5px;width:max-content;max-width:100%}
+.tabs button{background:transparent;border:none;border-right:1px solid var(--border);padding:10px 22.5px;font-size:12.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--fg-mute);cursor:pointer}
+.tabs button:last-child{border-right:none}
+.tabs button:hover{color:var(--fg)}
+.tabs button[aria-selected="true"]{background:var(--highlight);color:var(--fg)}
+.tabs button:focus-visible{outline:none;box-shadow:inset 0 0 0 1px var(--c-teal)}
+.tabs button::before{content:"[";color:var(--fg-dim);margin-right:6px}
+.tabs button::after{content:"]";color:var(--fg-dim);margin-left:6px}
+.tabpane{display:none} .tabpane[data-active="true"]{display:block}
+
+/* ------- segmented toggle ------- */
+.seg{display:inline-flex;border:1px solid var(--border);vertical-align:middle}
+.seg button{background:transparent;border:none;border-right:1px solid var(--border);padding:6px 15px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--fg-mute);cursor:pointer;white-space:nowrap}
+.seg button:last-child{border-right:none}
+.seg button:hover{color:var(--fg)}
+.seg button[aria-pressed="true"]{background:var(--highlight);color:var(--fg)}
+.seg button:focus-visible{outline:none;box-shadow:inset 0 0 0 1px var(--c-teal)}
+.seg button .n{color:var(--fg-dim);margin-left:7.5px}
+.seg button[aria-pressed="true"] .n{color:var(--fg-mute)}
+
+/* ------- buttons, badges ------- */
+.btn{font-size:12.5px;color:var(--fg);background:transparent;border:1px solid var(--border-strong);padding:7.5px 15px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .12s linear;white-space:nowrap}
+.btn:hover{background:var(--highlight)}
+.btn:focus-visible{outline:none;border-color:var(--c-teal)}
+.btn[aria-pressed="true"]{background:var(--highlight);border-color:var(--fg-mute)}
+.btn--accent{border-color:var(--c-teal);color:var(--c-teal)}
+.btn--ghost{border-color:var(--border);color:var(--fg-mute)}
+a.btn{border-bottom:1px solid var(--border-strong)}
+.btn:disabled{color:var(--fg-dim);cursor:default;background:transparent}
+.badge{display:inline-flex;align-items:center;gap:7.5px;border:1px solid var(--border-strong);font-size:11px;padding:2.5px 9px;text-transform:uppercase;letter-spacing:.12em;color:var(--fg-mute);white-space:nowrap;vertical-align:middle}
+.badge--teal{color:var(--c-teal);border-color:var(--c-teal)}
+.badge--green{color:var(--c-green);border-color:var(--c-green)}
+.badge--coral{color:var(--c-coral);border-color:var(--c-coral)}
+.badge--purple{color:var(--c-purple);border-color:var(--c-purple)}
+.badge--mustard{color:var(--c-mustard);border-color:var(--c-mustard)}
+.badge--fg{color:var(--fg);border-color:var(--fg-mute)}
+.badge .dot,.dot{display:inline-block;width:7.5px;height:7.5px;border-radius:50%;background:currentColor;flex:none}
+.badges{display:flex;flex-wrap:wrap;gap:7.5px;align-items:center}
+
+/* ------- frame ------- */
+.frame{border:1px solid var(--border);background:var(--bg);margin-bottom:17.5px;position:relative}
+.frame__label{position:absolute;top:-1px;left:15px;transform:translateY(-50%);background:var(--bg);padding:0 10px;font-size:12.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--fg);white-space:nowrap}
+.frame__label::before{content:"[";color:var(--fg-mute);margin-right:5px}
+.frame__label::after{content:"]";color:var(--fg-mute);margin-left:5px}
+.frame__label .n{color:var(--fg-mute);margin-left:10px;letter-spacing:.05em}
+.frame__body{padding:22.5px 20px 17.5px}
+.frame--tight .frame__body{padding:17.5px 15px 15px}
+.frame__body--list{padding:15px 0 0}
+.frame__tools{position:absolute;top:-1px;right:12.5px;transform:translateY(-50%);background:var(--bg);padding:0 7.5px;display:flex;gap:7.5px}
+
+/* ------- inputs ------- */
+.lbl{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:var(--fg-mute);margin:0 0 5px}
+.inp{width:100%;background:transparent;border:1px solid var(--border-strong);padding:7.5px 10px;color:var(--fg);font-size:14px;letter-spacing:.01em}
+.inp::placeholder{color:var(--fg-dim)}
+.inp:focus{outline:none;border-color:var(--c-teal)}
+select.inp{appearance:none;-webkit-appearance:none;background:var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0h8L4 6z' fill='%23888'/%3E%3C/svg%3E") no-repeat right 10px center;padding-right:27.5px;cursor:pointer}
+select.inp option{background:var(--bg-2);color:var(--fg)}
+.field{margin-bottom:12.5px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row--between{justify-content:space-between}
+
+/* ------- key/value ------- */
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:4px 17.5px;font-size:14px}
+.kv dt{color:var(--fg-mute);text-transform:uppercase;letter-spacing:.1em;font-size:11px;padding-top:2.5px;white-space:nowrap}
+.kv dd{color:var(--fg);min-width:0;overflow-wrap:anywhere}
+.kv dd .mute{color:var(--fg-mute)}
+
+/* ------- data table ------- */
+.tablewrap{overflow:auto;border:1px solid var(--border);max-height:650px}
+.data-table{width:100%;border-collapse:collapse;font-size:14px}
+.data-table th,.data-table td{text-align:left;padding:6px 12.5px;border-bottom:1px dashed var(--border);color:var(--fg-mute);white-space:nowrap;vertical-align:top}
+.data-table th{font-weight:400;color:var(--fg-dim);text-transform:uppercase;letter-spacing:.12em;font-size:11px;position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border-strong);z-index:1}
+.data-table th.sortable{cursor:pointer;user-select:none}
+.data-table th.sortable:hover{color:var(--fg)}
+.data-table th[aria-sort="ascending"]::after{content:" \25B4";color:var(--fg)}
+.data-table th[aria-sort="descending"]::after{content:" \25BE";color:var(--fg)}
+.data-table td.k{color:var(--fg)}
+.data-table td.r,.data-table th.r{text-align:right;font-variant-numeric:tabular-nums}
+.data-table tr.active td{background:var(--highlight);color:var(--fg)}
+.data-table tbody tr[tabindex]{cursor:pointer}
+.data-table tbody tr[tabindex]:hover td{background:var(--bg-2)}
+.data-table tbody tr:focus-visible{outline:none} .data-table tbody tr:focus-visible td{box-shadow:inset 0 0 0 1px var(--c-teal)}
+.data-table td.wrap{white-space:normal;min-width:225px}
+
+/* ------- bar lists (every chart is a list of divs) ------- */
+.bars{display:grid;grid-template-columns:minmax(100px,max-content) 1fr max-content;gap:4px 12.5px;font-size:14px;align-items:center}
+.bars .bl{color:var(--fg-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:275px}
+.bars .bv{height:10px;border:1px solid var(--border-strong);position:relative;background:transparent}
+.bars .bv i{position:absolute;inset:0;right:auto;background:var(--fg-dim)}
+.bars .bv.teal i{background:var(--c-teal)} .bars .bv.coral i{background:var(--c-coral)} .bars .bv.purple i{background:var(--c-purple)} .bars .bv.mustard i{background:var(--c-mustard)}
+.bars .bn{color:var(--fg);font-variant-numeric:tabular-nums;text-align:right}
+.bars button.bl{background:none;border:none;text-align:left;cursor:pointer;padding:0}
+.bars button.bl:hover{color:var(--fg)}
+
+/* ------- rail (the scrolling list of records) ------- */
+.rail{border:1px solid var(--border);max-height:calc(100vh - 412.5px);min-height:300px;overflow:auto}
+.irow{display:flex;justify-content:space-between;gap:10px;width:100%;background:transparent;border:none;border-bottom:1px dashed var(--border);padding:7.5px 12.5px;text-align:left;cursor:pointer;color:var(--fg-mute)}
+.irow:hover{background:var(--bg-2);color:var(--fg)}
+.irow[aria-current="true"]{background:var(--highlight);color:var(--fg)}
+.irow:focus-visible{outline:none;box-shadow:inset 0 0 0 1px var(--c-teal)}
+.irow .id{color:var(--fg);font-size:14px}
+.irow .m{display:block;font-size:12.5px;color:var(--fg-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:212.5px}
+.irow .chips{display:flex;gap:5px;flex:none;align-items:flex-start}
+.chip{font-size:11px;border:1px solid var(--border-strong);padding:0 6px;color:var(--fg-mute);letter-spacing:.08em;white-space:nowrap}
+.chip.coral{color:var(--c-coral);border-color:var(--c-coral)} .chip.teal{color:var(--c-teal);border-color:var(--c-teal)} .chip.purple{color:var(--c-purple);border-color:var(--c-purple)} .chip.mustard{color:var(--c-mustard);border-color:var(--c-mustard)} .chip.green{color:var(--c-green);border-color:var(--c-green)}
+.note{padding:10px 12.5px;color:var(--fg-dim);font-size:12.5px}
+.empty{padding:25px 15px;color:var(--fg-dim);text-align:center}
+.count{font-size:12.5px;color:var(--fg-mute);letter-spacing:.08em;text-transform:uppercase}
+
+/* ------- tooltip ------- */
+.tip{position:absolute;display:none;z-index:20;background:var(--bg-2);border:1px solid var(--border-strong);padding:10px 12.5px;font-size:14px;max-width:425px;pointer-events:none;color:var(--fg-mute)}
+.tip .h{color:var(--fg);margin-bottom:5px}
+.tip table td{padding:1px 10px 1px 0;vertical-align:top}
+.tip table td:first-child{color:var(--fg-dim);text-transform:uppercase;font-size:11px;letter-spacing:.1em;padding-top:4px}
+
+/* ------- prose (how to read) ------- */
+.prose{max-width:1025px;font-size:15px;color:var(--fg-mute)}
+.prose p{margin-bottom:12.5px} .prose b{color:var(--fg)}
+.prose h3{font-size:12.5px;text-transform:uppercase;letter-spacing:.16em;color:var(--fg);margin:22.5px 0 10px}
+.prose ul{padding-left:22.5px;margin-bottom:12.5px} .prose li{margin-bottom:5px}
+.prose code{color:var(--c-teal);font-size:14px}
+
+/* ------- legend ------- */
+.legend{display:flex;flex-wrap:wrap;gap:7.5px 20px;font-size:12.5px;color:var(--fg-mute);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:7.5px}
+.legend svg{width:27.5px;height:15px;flex:none}
+
+/* ------- footer ------- */
+.foot{margin-top:32.5px;border-top:1px solid var(--border);padding-top:15px;display:flex;justify-content:space-between;gap:17.5px;flex-wrap:wrap;color:var(--fg-dim);font-size:12.5px}
+
+/* ------- scrollbars: a hairline track and a flat thumb, no rounding, in the page's own greys ------- */
+*{scrollbar-width:thin;scrollbar-color:var(--border-strong) var(--bg)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:var(--bg);border-left:1px solid var(--border)}
+::-webkit-scrollbar-track:horizontal{border-left:none;border-top:1px solid var(--border)}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border:2px solid var(--bg);border-radius:0}
+::-webkit-scrollbar-thumb:hover{background:var(--fg-dim)}
+::-webkit-scrollbar-corner{background:var(--bg)}
+
+/* ------- motion ------- */
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:1100px){body{padding:17.5px 20px 50px}.topbar{grid-template-columns:1fr}.topbar__meta{min-width:0}}

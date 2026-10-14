@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Islands · <!--GROUP_NAME--></title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<!--CORE:css-->
+<style>
+.grid3{display:grid;grid-template-columns:330px minmax(0,1fr) 400px;gap:17.5px;align-items:start}
+@media (max-width:1600px){.grid3{grid-template-columns:330px minmax(0,1fr)}.grid3 > .col-r{grid-column:1 / -1}}
+@media (max-width:1100px){.grid3{grid-template-columns:1fr}.grid3 > .col-r{grid-column:auto}.rail{max-height:375px}}
+.metastrip{display:flex;flex-wrap:wrap;gap:7.5px 22.5px;font-size:14px;color:var(--fg-mute);margin-bottom:15px;align-items:center}
+.metastrip b{color:var(--fg)}
+.mapwrap{overflow-x:auto;overflow-y:hidden;border:1px solid var(--border);background:var(--bg-2);position:relative}
+.gmap{display:block}
+.gmap .gene{cursor:pointer}
+.gmap .gene:hover{stroke-width:2.2}
+.gmap .gene.sel{stroke:var(--fg);stroke-width:2}
+.gmap .gene.cur{stroke-width:2.4}
+.gmap .glab{font-family:var(--mono);font-size:11px;fill:var(--fg-mute);pointer-events:none}
+.gmap .glab.hi{fill:var(--fg)}
+.gmap .glab.cur{fill:var(--c-teal)}
+.gmap .gaxis{stroke:var(--border-strong)} .gmap .gtick{stroke:var(--border-strong)}
+.gmap .gaxlab{font-family:var(--mono);font-size:11px;fill:var(--fg-dim)}
+.gmap .gcap{font-family:var(--mono);font-size:11px;fill:var(--fg-dim);letter-spacing:.1em;text-transform:uppercase}
+.fitnote{font-size:12.5px;color:var(--fg-dim);margin:7.5px 0 12.5px}
+.mapwrap.stack{overflow-y:auto;max-height:720px}
+.gmap .srow{font-family:var(--mono);font-size:11px;fill:var(--fg-mute);cursor:pointer}
+.gmap .srow:hover{fill:var(--fg)}
+.gmap .srow.cur{fill:var(--fg)}
+.gmap .sanchor{stroke:var(--fg-dim);stroke-dasharray:3 3}
+.gmap .gene.hl{stroke:var(--fg);stroke-width:2.2}
+.gmap .gene.dimmed{opacity:.35}
+.prof td.bar{width:34%;min-width:140px}
+.prof .bv{display:block;height:9px;border:1px solid var(--border-strong);position:relative}
+.prof .bv i{position:absolute;inset:0;right:auto;background:var(--fg-dim)}
+.prof .bv.coral i{background:var(--c-coral)} .prof .bv.teal i{background:var(--c-teal)} .prof .bv.purple i{background:var(--c-purple)} .prof .bv.mustard i{background:var(--c-mustard)}
+.prof tbody tr.hl td{background:var(--highlight);color:var(--fg)}
+.genes-table td.lab{white-space:normal;min-width:150px;max-width:250px}
+.dist{display:grid;grid-template-columns:repeat(auto-fit,minmax(375px,1fr));gap:17.5px;align-items:start}
+.dist .frame{margin-bottom:0}
+.filterchip{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--c-teal);color:var(--c-teal);padding:5px 10px;font-size:12.5px;letter-spacing:.08em;margin-bottom:12.5px}
+.filterchip button{background:none;border:none;color:inherit;cursor:pointer;font-size:15px}
+.btn--wrap{white-space:normal;text-align:left;max-width:100%;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar__id">
+    <div class="id__head">resistance islands · <!--GROUP_NAME--></div>
+    <div class="id__name">Islands <span class="light">/ where the resistance genes sit</span></div>
+    <div class="id__sub">Every tier-1 and tier-2 resistance island, its gene map in contig coordinates, and the architecture type it belongs to; the tier-3 backbone windows around core resistance genes on request.</div>
+  </div>
+  <div class="topbar__meta">
+    <nav class="nav" aria-label="pages"><a href="islands.html" aria-current="page">islands</a><a href="clusters.html">clusters</a><a href="antibiograms.html">antibiograms</a></nav>
+    <div>
+      <div class="meta__row"><span>islands</span><span id="mIsl"></span></div>
+      <div class="meta__row"><span>genes mapped</span><span id="mGenes"></span></div>
+      <div class="meta__row"><span>architecture types</span><span id="mTypes"></span></div>
+      <div class="meta__row"><span>built</span><span id="mBuilt"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="tabs" role="tablist">
+  <button role="tab" data-tab="islands">islands</button>
+  <button role="tab" data-tab="distribution">distribution</button>
+  <button role="tab" data-tab="howto">how to read</button>
+</div>
+
+<section data-pane="islands" class="tabpane">
+<div class="grid3">
+  <div class="col-l">
+    <div class="frame frame--tight"><span class="frame__label">filter</span><div class="frame__body">
+      <div id="clusterChip"></div>
+      <div class="field"><label class="lbl" for="q">search</label><input class="inp" id="q" placeholder="island, isolate, contig, gene, class…" autocomplete="off"></div>
+      <div class="field"><label class="lbl" for="fSpecies">species</label><select class="inp" id="fSpecies"></select></div>
+      <div class="field"><label class="lbl" for="fPds">SNP lineage</label><select class="inp" id="fPds"></select></div>
+      <div class="field"><label class="lbl" for="fAmr">amr class</label><select class="inp" id="fAmr"></select></div>
+      <div class="field"><label class="lbl" for="fSub">amr subclass</label><select class="inp" id="fSub"></select></div>
+      <div class="field"><span class="lbl">tier</span><div class="seg" id="fTier"><button data-v="12">tier 1+2</button><button data-v="0">tier 1</button><button data-v="1">tier 2</button><button data-v="2">tier 3</button><button data-v="">all</button></div></div>
+      <div class="field row"><button class="btn btn--ghost" id="fInt" aria-pressed="false">integron</button><button class="btn btn--ghost" id="fMge" aria-pressed="false">with MGE</button></div>
+      <div class="field"><label class="lbl" for="fSort">sort</label><select class="inp" id="fSort"><option value="id">island id</option><option value="genes">genes, most first</option><option value="anchor">resistance genes, most first</option><option value="span">span, longest first</option><option value="fam">resistance families, most first</option></select></div>
+    </div></div>
+    <div class="frame frame--tight"><span class="frame__label">islands <span class="n" id="nisl"></span></span><div class="frame__body frame__body--list"><div class="rail" id="rail"></div></div></div>
+  </div>
+
+  <div class="col-c">
+    <div class="frame"><span class="frame__label">gene map</span>
+      <div class="frame__tools"><div class="seg" id="fitseg"><button data-v="fit">fit</button><button data-v="detail">detail</button></div></div>
+      <div class="frame__body">
+        <div class="metastrip" id="meta"></div>
+        <div class="mapwrap" id="mapwrap"></div>
+        <div class="fitnote" id="fitnote"></div>
+        <div class="legend" id="legend"></div>
+      </div></div>
+    <div class="frame"><span class="frame__label"><span id="genesLabel">genes</span> <span class="n" id="ngenes"></span></span><div class="frame__body frame__body--list"><div class="tablewrap" style="border:none;max-height:525px"><table class="data-table genes-table" id="genes"></table></div></div></div>
+  </div>
+
+  <div class="col-r">
+    <div class="frame"><span class="frame__label">record</span><div class="frame__tools"><button class="btn btn--ghost" id="copyId">copy id</button></div><div class="frame__body" id="panel"></div></div>
+    <div class="frame" id="typeFrame"><span class="frame__label">architecture type</span><div class="frame__body" id="typePanel"></div></div>
+  </div>
+</div>
+</section>
+
+<section data-pane="distribution" class="tabpane"><div id="dist" class="dist"></div></section>
+
+<section data-pane="howto" class="tabpane"><div class="frame"><span class="frame__label">how to read</span><div class="frame__body prose" id="howto"></div></div></section>
+
+<div class="foot"><span id="footL"></span><span>islands · clusters · antibiograms — three self-contained pages, no server</span></div>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<!--DATA:__ISL:islands.json-->
+<!--DATA:__GM:genemaps.json-->
+<!--CORE:js-->
+<script>
+/* ============================ data ============================ */
+const ISL = window.__ISL, GM = window.__GM;
+const F = fieldIndex(ISL.fields), TF = fieldIndex(ISL.type_fields), CD = ISL.dicts;
+const D = (k, v) => dict(CD, k, v);
+const ROLES = GM.roles, FL = GM.flag_label, FP = GM.flag_pseudo, BP = GM.bp;
+const N = ISL.ids.length;
+const REC = new Map(); ISL.ids.forEach((n, i) => REC.set(n, ISL.isl[i]));
+const rec = n => REC.get(n);
+const st = {isl:null, gene:-1, fit:true, cluster:null, amrclass:null, subclass:null, tier:"12", view:"island", group:null, hl:null};
+/* the tier filter: "12" (default) hides the tier-3 backbone windows, "" shows everything */
+const tierOK = r => st.tier === "12" ? r[F.tier] !== 2 : st.tier === "" ? true : r[F.tier] === +st.tier;
+delete window.__ISL; delete window.__GM;
+
+/* decode one island's genes on demand; the JavaScript mirror of 36_verify_payloads.decode_island */
+const _isl = new Map();
+function island(n){
+  let o = _isl.get(n); if(o) return o;
+  const raw = GM.g[n]; if(!raw) return null;
+  const v = varints(raw);
+  let prev = v[0], i = 1; const genes = [];
+  while(i < v.length){
+    const gap = unzig(v[i++]), w = v[i++], cs = v[i++], fl = v[i++];
+    let li = -1; if(fl & FL) li = v[i++] - 1;
+    const start = (prev + gap) * BP, ci = (cs >> 1) - 1;
+    const role = ROLES[fl & 15] || "other";
+    genes.push({s:start, e:start + w * BP, strand:(cs & 1) ? 1 : -1, ci, cluster: ci >= 0 ? GM.cluster[ci] : -1,
+      role, pseudo: !!(fl & FP), label: li >= 0 ? GM.dicts.label[li] : (ci >= 0 ? GM.clabel[ci] : ""), own: li >= 0,
+      cls: ci >= 0 && GM.cclass[ci] >= 0 ? GM.dicts.amrclass[GM.cclass[ci]] : "", sub: ci >= 0 && GM.csub[ci] >= 0 ? GM.dicts.amrsubclass[GM.csub[ci]] : ""});
+    prev = prev + gap + w;
+  }
+  o = {n, genes, lo: genes[0].s, hi: genes[genes.length - 1].e};
+  _isl.set(n, o); return o;
+}
+/* islands carrying a cluster: needs every island decoded once, so it is built lazily and cached */
+let CL_INDEX = null, CLASS_INDEX = null, SUB_INDEX = null;
+const tokens = s => s ? s.split(";") : [];
+function buildIndex(){
+  if(CL_INDEX) return;
+  CL_INDEX = new Map(); CLASS_INDEX = new Map(); SUB_INDEX = new Map();
+  const add = (m, k, n) => { let a = m.get(k); if(!a){ a = []; m.set(k, a); } a.push(n); };
+  for(const n of ISL.ids){ const o = island(n), seen = new Set(), sc = new Set(), ss = new Set();
+    for(const g of o.genes){
+      if(g.cluster >= 0 && !seen.has(g.cluster)){ seen.add(g.cluster); add(CL_INDEX, g.cluster, n); }
+      if(/^amr_anchor/.test(g.role)){ for(const t of tokens(g.cls)) sc.add(t); for(const t of tokens(g.sub)) ss.add(t); } }
+    for(const t of sc) add(CLASS_INDEX, t, n); for(const t of ss) add(SUB_INDEX, t, n); }
+}
+function islandsOf(cn){ buildIndex(); return CL_INDEX.get(cn) || []; }
+function islandsOfClass(c){ buildIndex(); return CLASS_INDEX.get(c) || []; }
+function islandsOfSub(c){ buildIndex(); return SUB_INDEX.get(c) || []; }
+/* the gene of an island that carries a class or subclass: the first resistance anchor whose cluster lists it */
+const classGene = (o, kind, id) => o.genes.find(g => /^amr_anchor/.test(g.role) && tokens(kind === "class" ? g.cls : g.sub).includes(id));
+const styleOf = g => ROLE_STYLE[g.role === "mge" && g.pseudo ? "mge_pseudo" : g.role] || ROLE_STYLE.other;
+const tierName = t => t === 0 ? "tier 1" : t === 1 ? "tier 2" : "tier 3 · chromosomal window";
+const tierBadge = t => t === 0 ? "coral" : t === 1 ? "fg" : "";
+const spanOf = r => r[F.span_kb_x10] / 10;
+
+/* ============================ header ============================ */
+{ const n3 = ISL.isl.filter(r => r[F.tier] === 2).length; $('mIsl').textContent = `${fmt(N - n3)} + ${fmt(n3)} tier 3`; } $('mTypes').textContent = fmt(Object.keys(ISL.types).length);
+$('mBuilt').textContent = ISL.built;
+$('mGenes').textContent = fmt(ISL.isl.reduce((a, r) => a + r[F.n_genes], 0));
+$('footL').textContent = `${META.group.replace(/_/g, " ")} · payloads built ${ISL.built}`;
+
+/* ============================ filters and rail ============================ */
+function countBy(key, list){ const m = new Map(); for(const r of (list || ISL.isl)){ const v = r[F[key]]; m.set(v, (m.get(v) || 0) + 1); } return m; }
+{ const sp = countBy("species"); opts($('fSpecies'), [...sp.entries()].sort((a, b) => b[1] - a[1]).map(([v, c]) => [v, `${D("species", v)} · ${fmt(c)}`]), "all species");
+  const pd = countBy("pds"); opts($('fPds'), [...pd.entries()].filter(([v]) => v >= 0).sort((a, b) => b[1] - a[1]).map(([v, c]) => [v, `${D("pds", v)} · ${fmt(c)}`]), "all lineages"); }
+/* class options come from the island records (a ";" set per island); subclass options need the gene index */
+{ const m = new Map(); for(const r of ISL.isl) for(const t of tokens(D("amrclass", r[F.amr_classes]))) m.set(t, (m.get(t) || 0) + 1);
+  opts($('fAmr'), [...m.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([t, c]) => [t, `${t.toLowerCase()} · ${fmt(c)}`]), "all classes"); }
+function subOptions(){ buildIndex(); opts($('fSub'), [...SUB_INDEX.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([t, a]) => [t, `${t.toLowerCase()} · ${fmt(a.length)}`]), "all subclasses"); }
+opts($('fSub'), [], "all subclasses");
+$('fSub').addEventListener('focus', () => { if($('fSub').options.length === 1) subOptions(); }, {once: true});
+
+function listed(){
+  const q = $('q').value.trim().toLowerCase(), sp = $('fSpecies').value, pd = $('fPds').value;
+  const wantInt = $('fInt').getAttribute('aria-pressed') === 'true', wantMge = $('fMge').getAttribute('aria-pressed') === 'true';
+  const mIsl = /^[a-z]*i?\s*-?0*(\d{1,6})$/i.exec(q);
+  let ids = st.cluster != null ? islandsOf(st.cluster) : ISL.ids;
+  if(st.amrclass){ const set = new Set(islandsOfClass(st.amrclass)); ids = ids.filter(n => set.has(n)); }
+  if(st.subclass){ const set = new Set(islandsOfSub(st.subclass)); ids = ids.filter(n => set.has(n)); }
+  const out = [];
+  for(const n of ids){
+    const r = rec(n);
+    if(!tierOK(r)) continue;
+    if(st.typeFilter != null && r[F.type] !== st.typeFilter) continue;
+    if(sp !== "" && r[F.species] !== +sp) continue;
+    if(pd !== "" && r[F.pds] !== +pd) continue;
+    if(wantInt && !r[F.integron]) continue;
+    if(wantMge && !r[F.n_mge_genes]) continue;
+    if(q){
+      if(mIsl && q.replace(/\D/g, "") === String(n)) { out.push(n); continue; }
+      const s = (islandId(n) + " " + D("target", r[F.target]) + " " + D("contig", r[F.contig]) + " " + D("species", r[F.species]) + " " +
+                 D("families", r[F.amr_gene_families]) + " " + D("amrclass", r[F.amr_classes]) + " " + D("mge", r[F.mge_kinds]) + " " + D("pds", r[F.pds])).toLowerCase();
+      if(!s.includes(q)) continue;
+    }
+    out.push(n);
+  }
+  const by = $('fSort').value;
+  const key = {genes: F.n_genes, anchor: F.n_anchor, span: F.span_kb_x10, fam: F.n_amr_families}[by];
+  if(key != null) out.sort((a, b) => rec(b)[key] - rec(a)[key] || a - b);
+  return out;
+}
+const CAP = 300;
+function rail(){
+  const L = listed();
+  $('nisl').textContent = `${fmt(L.length)} of ${fmt(N)}`;
+  const show = L.slice(0, CAP);
+  $('rail').innerHTML = show.length ? show.map(n => { const r = rec(n);
+    const fam = D("families", r[F.amr_gene_families]);
+    return `<button class="irow" data-n="${n}"${n === st.isl ? ' aria-current="true"' : ''}>
+      <span><span class="id">${islandId(n)}</span><span class="m" title="${esc(fam)}">${esc(fam || D("species", r[F.species]))}</span></span>
+      <span class="chips"><span class="chip">${r[F.n_genes]}</span>${r[F.tier] === 0 ? '<span class="chip coral">t1</span>' : r[F.tier] === 2 ? '<span class="chip">t3</span>' : ''}${r[F.integron] ? '<span class="chip mustard">int</span>' : ''}</span></button>`; }).join("")
+    + (L.length > show.length ? `<div class="note">${fmt(L.length - show.length)} more match — narrow the filters.</div>` : "")
+    : `<div class="empty">no island matches</div>`;
+  const span = (st.cluster != null || st.typeFilter != null || st.amrclass || st.subclass) ? (() => { const t = new Set(), pd = new Set(), sp = new Set(), ty = new Set();
+    for(const n of L){ const r = rec(n); t.add(r[F.target]); if(r[F.pds] >= 0) pd.add(r[F.pds]); sp.add(r[F.species]); if(r[F.type] >= 0) ty.add(r[F.type]); }
+    return `<div class="note" style="padding:0 0 10px">${fmt(L.length)} islands in ${fmt(t.size)} isolates, ${fmt(pd.size)} lineages, ${sp.size} species, ${fmt(ty.size)} architecture types${st.cluster != null ? "; the type panel describes the selected island only" : ""}</div>` +
+      (st.cluster != null ? `<div class="field"><button class="btn btn--accent btn--wrap" id="alignCl">align on ${clusterId(st.cluster)} · ${L.length > ROWCAP ? `${ROWCAP} of ${fmt(L.length)} islands drawn` : `${fmt(L.length)} island${L.length === 1 ? "" : "s"} drawn`}, all counted</button></div>` :
+       st.subclass ? `<div class="field"><button class="btn btn--accent btn--wrap" id="alignCls" data-kind="subclass">align on the ${esc(st.subclass.toLowerCase())} gene · ${L.length > ROWCAP ? `${ROWCAP} of ${fmt(L.length)} islands drawn` : `${fmt(L.length)} drawn`}, all counted</button></div>` :
+       st.amrclass ? `<div class="field"><button class="btn btn--accent btn--wrap" id="alignCls" data-kind="class">align on the ${esc(st.amrclass.toLowerCase())} gene · ${L.length > ROWCAP ? `${ROWCAP} of ${fmt(L.length)} islands drawn` : `${fmt(L.length)} drawn`}, all counted</button></div>` : ""); })() : "";
+  $('clusterChip').innerHTML = (st.cluster != null ? `<div class="filterchip"><span>islands with ${clusterId(st.cluster)}</span><button data-k="cluster" title="clear">×</button></div>` : "")
+    + (st.typeFilter != null ? `<div class="filterchip"><span>architecture type ${st.typeFilter}</span><button data-k="type" title="clear">×</button></div>` : "") + span;
+  $('clusterChip').querySelectorAll('button[data-k]').forEach(b => b.onclick = () => { if(b.dataset.k === "cluster"){ st.cluster = null; QS.set({cluster: null, view: null}); if(st.view === "type" && st.group.kind === "cluster" && st.isl != null) select(st.isl, true); } else st.typeFilter = null; rail(); });
+  const ab = $('alignCl'); if(ab) ab.onclick = () => groupView("cluster", st.cluster);
+  const ac = $('alignCls'); if(ac) ac.onclick = () => groupView(ac.dataset.kind, ac.dataset.kind === "class" ? st.amrclass : st.subclass);
+  return L;
+}
+$('rail').onclick = e => { const b = e.target.closest('.irow'); if(b) select(+b.dataset.n); };
+['fSpecies', 'fPds', 'fSort'].forEach(i => $(i).onchange = rail);
+$('fAmr').onchange = () => { st.amrclass = $('fAmr').value || null; QS.set({amrclass: st.amrclass}); leaveGroupIf("class"); rail(); };
+$('fSub').onchange = () => { st.subclass = $('fSub').value || null; QS.set({subclass: st.subclass}); leaveGroupIf("subclass"); rail(); };
+function leaveGroupIf(kind){ if(st.view === "type" && st.group && st.group.kind === kind && st.isl != null) select(st.isl, true); }
+$('q').oninput = debounce(rail, 150);
+['fInt', 'fMge'].forEach(i => $(i).onclick = () => { const b = $(i); b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); rail(); });
+const setTier = wireSeg($('fTier'), v => { st.tier = v; QS.set({tier: v === "12" ? null : v}); distDone = null;
+  if(st.view === "type" && st.group) groupView(st.group.kind, st.group.id); else rail();
+  if(document.querySelector('[data-pane="distribution"]').dataset.active === "true") distView(); }, "12");
+
+/* ============================ gene map ============================ */
+const setFit = wireSeg($('fitseg'), v => { st.fit = v === "fit"; drawMap(); }, "fit");
+function arrowPts(x0, x1, strand, yB, half, cap){
+  const w = Math.max(x1 - x0, 1.5), head = Math.min(0.55 * w, cap);
+  return strand === -1
+    ? [[x1, yB - half], [x0 + head, yB - half], [x0, yB], [x0 + head, yB + half], [x1, yB + half]]
+    : [[x0, yB - half], [x1 - head, yB - half], [x1, yB], [x1 - head, yB + half], [x0, yB + half]];
+}
+function drawMap(){
+  const o = st.isl != null ? island(st.isl) : null;
+  if(!o){ $('mapwrap').innerHTML = `<div class="empty">pick an island</div>`; return; }
+  const n = o.genes.length, span = Math.max(o.hi - o.lo, 1), pad = Math.max(0.012 * span, 200);
+  const xlo = o.lo - pad, xhi = o.hi + pad, sp = xhi - xlo, ML = 14, MR = 14;
+  const avail = Math.max(650, ($('mapwrap').clientWidth || 1000) - 2);
+  const W = st.fit ? avail : Math.min(Math.max(n * 65, 775), 7500);
+  const plotW = W - ML - MR, yB = 68, HALF = 16, yAxis = 200, H = 240;
+  const xs = bp => ML + (bp - xlo) / sp * plotW, cap = Math.max(4, 0.016 * plotW);
+  const p = [];
+  p.push(`<line class="gaxis" x1="${ML}" y1="${yAxis}" x2="${W - MR}" y2="${yAxis}"/>`);
+  for(let k = 0; k <= 5; k++){ const bp = xlo + sp * k / 5, x = xs(bp).toFixed(1);
+    p.push(`<line class="gtick" x1="${x}" y1="${yAxis}" x2="${x}" y2="${yAxis + 5}"/>`);
+    p.push(`<text class="gaxlab" x="${x}" y="${yAxis + 18}" text-anchor="${k === 0 ? "start" : k === 5 ? "end" : "middle"}">${Math.round(bp).toLocaleString("en-US")}</text>`); }
+  const r = rec(o.n);
+  p.push(`<text class="gcap" x="${ML}" y="${H - 6}">${esc(D("contig", r[F.contig]))} · position (bp) · ${(span / 1000).toFixed(1)} kb</text>`);
+  let lastLab = -1e9;
+  o.genes.forEach((g, i) => {
+    const x0 = xs(g.s), x1 = xs(g.e), s = styleOf(g);
+    const pts = arrowPts(x0, x1, g.strand, yB, HALF, cap);
+    const cls = "gene" + (st.cluster != null && g.cluster === st.cluster ? " sel" : "") + (i === st.gene ? " cur" : "");
+    p.push(`<polygon class="${cls}" data-i="${i}" points="${pts.map(q => q[0].toFixed(1) + "," + q[1].toFixed(1)).join(" ")}" fill="${s.fill}" stroke="${s.stroke}" stroke-width="${s.sw}"${s.dash ? ' stroke-dasharray="3 2"' : ''}/>`);
+    const cx = 0.5 * (x0 + x1);
+    if(s.dot) p.push(`<circle cx="${cx.toFixed(1)}" cy="${yB}" r="2.8" fill="${s.stroke}"/>`);
+    const important = ANALYSED_ROLES.has(g.role) || g.role === "mge";
+    const gapOK = cx - lastLab > (st.fit ? 38 : 28);
+    if(g.label && (important || !st.fit || (x1 - x0) > 40) && (gapOK || i === st.gene)){
+      lastLab = cx;
+      const lab = g.label.length > 22 ? g.label.slice(0, 21) + "…" : g.label, y = yB + HALF + 10;
+      p.push(`<text class="glab${important ? " hi" : ""}${i === st.gene ? " cur" : ""}" x="${cx.toFixed(1)}" y="${y}" text-anchor="end" transform="rotate(-38 ${cx.toFixed(1)} ${y})">${esc(lab)}</text>`);
+    }
+  });
+  $('mapwrap').innerHTML = `<svg class="gmap" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="gene map of island ${islandId(o.n)}">${p.join("")}</svg>`;
+  $('fitnote').innerHTML = st.fit
+    ? (plotW / n < 30 ? `${n} genes in ${(span / 1000).toFixed(1)} kb — too tight for every label; switch to detail to read them` : `whole island in view · coordinates quantised to ${BP} bp`)
+    : `${n * 65 > avail ? "scroll sideways — " : ""}one gene per ~65 px · coordinates quantised to ${BP} bp`;
+  wireMap(o);
+}
+function wireMap(o){
+  const svg = $('mapwrap').querySelector('svg'), tip = $('tip');
+  svg.addEventListener('mousemove', e => {
+    const el = e.target.closest('.gene'); if(!el){ hideTip(tip); return; }
+    const g = o.genes[+el.dataset.i], s = styleOf(g);
+    showTip(tip, e, `<div class="h">${esc(g.label || "unlabelled")}${g.pseudo ? ' <span class="chip mustard">pseudogene</span>' : ''}</div><table>
+      <tr><td>role</td><td>${esc(s.label)}</td></tr>
+      <tr><td>cluster</td><td>${g.cluster >= 0 ? clusterId(g.cluster) : "none"}${g.own ? ' <span class="mute">· own label</span>' : ''}</td></tr>
+      ${g.cls ? `<tr><td>amr class</td><td>${esc(g.cls.toLowerCase())}${g.sub && g.sub !== g.cls ? ` <span class="mute">· ${esc(g.sub.toLowerCase())}</span>` : ""}</td></tr>` : ""}
+      <tr><td>location</td><td>${fmt(g.s)}–${fmt(g.e)} (${g.strand === 1 ? "+" : "−"})</td></tr>
+      <tr><td>length</td><td>~${Math.max(1, Math.round((g.e - g.s) / 3) - 1)} aa</td></tr></table>
+      <div class="dim" style="margin-top:5px">click to select · double-click opens the cluster</div>`);
+  });
+  svg.addEventListener('mouseleave', () => hideTip(tip));
+  svg.addEventListener('click', e => { const el = e.target.closest('.gene'); if(!el) return; selectGene(+el.dataset.i); });
+  svg.addEventListener('dblclick', e => { const el = e.target.closest('.gene'); if(!el) return; const g = o.genes[+el.dataset.i]; if(g.cluster >= 0) location.href = link.cluster(g.cluster); });
+}
+function selectGene(i){ st.gene = st.gene === i ? -1 : i; drawMap(); genesTable(); }
+$('legend').innerHTML = legendHTML();
+
+/* ============================ type view ============================ */
+/* Every island of one architecture type on one coordinate system, aligned on the cluster the type
+   shares most often and flipped so that cluster always points right. Aligning on the shared gene is
+   what makes the comparison mean anything: the neighbour that is always two ORFs upstream lines up
+   into a column, and the one present in a third of the islands reads as a gap. The rows are capped;
+   the conservation table is not - it is computed over every island of the type. */
+const _group = new Map();
+function buildGroup(kind, id){
+  const key = kind + ":" + id + ":" + st.tier;
+  let T = _group.get(key); if(T) return T;
+  const ids = (kind === "type" ? ISL.ids.filter(n => rec(n)[F.type] === id) : kind === "cluster" ? islandsOf(id) : kind === "class" ? islandsOfClass(id) : islandsOfSub(id)).filter(n => tierOK(rec(n)));
+  const anchorUse = new Map();                     /* cluster -> islands in which it was the anchor */
+  const pres = new Map(), roleCount = new Map(), label = new Map(), rel = new Map();
+  for(const n of ids){ const o = island(n), seen = new Set();
+    for(const g of o.genes){ if(g.cluster < 0 || seen.has(g.cluster)) continue; seen.add(g.cluster);
+      pres.set(g.cluster, (pres.get(g.cluster) || 0) + 1);
+      if(!label.has(g.cluster)) label.set(g.cluster, g.ci >= 0 ? GM.clabel[g.ci] : g.label);
+      const rc = roleCount.get(g.cluster) || {}; rc[g.role] = (rc[g.role] || 0) + 1; roleCount.set(g.cluster, rc); } }
+  const roleOf = c => { const rc = roleCount.get(c) || {}; return Object.keys(rc).sort((a, b) => rc[b] - rc[a])[0] || "other"; };
+  const ranked = [...pres.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0]).map(e => e[0]);
+  let anchorRank = ranked.filter(c => /^amr_anchor/.test(roleOf(c))).concat(ranked.filter(c => !/^amr_anchor/.test(roleOf(c))));
+  if(kind === "cluster") anchorRank = [id].concat(anchorRank.filter(c => c !== id));   /* the filter cluster is in every island: align on it */
+  const rows = [];
+  for(const n of ids){ const o = island(n);
+    let ag = (kind === "class" || kind === "subclass") ? classGene(o, kind, id) : null;
+    if(!ag){ const ac = anchorRank.find(c => o.genes.some(g => g.cluster === c)); ag = o.genes.find(g => g.cluster === ac) || o.genes[0]; }
+    if(ag.cluster >= 0) anchorUse.set(ag.cluster, (anchorUse.get(ag.cluster) || 0) + 1);
+    const mid = (ag.s + ag.e) / 2, flip = ag.strand === -1;
+    const genes = o.genes.map((g, i) => { const a = flip ? mid - g.e : g.s - mid, b = flip ? mid - g.s : g.e - mid;
+      return {i, g, s: a, e: b, strand: flip ? -g.strand : g.strand, anchor: g === ag}; }).sort((a, b) => a.s - b.s);
+    genes.forEach(x => { if(x.g.cluster >= 0){ let a = rel.get(x.g.cluster); if(!a){ a = []; rel.set(x.g.cluster, a); } a.push((x.s + x.e) / 2); } });
+    rows.push({n, o, genes, anchor: ag.cluster, lo: genes[0].s, hi: genes[genes.length - 1].e}); }
+  const median = a => { const b = [...a].sort((x, y) => x - y); return b.length ? (b.length % 2 ? b[(b.length - 1) / 2] : (b[b.length / 2 - 1] + b[b.length / 2]) / 2) : 0; };
+  const profile = ranked.map(c => ({c, n: pres.get(c), role: roleOf(c), label: label.get(c) || "", pos: median(rel.get(c) || []), anchorN: anchorUse.get(c) || 0}));
+  const anchor = (kind === "class" || kind === "subclass") ? [...anchorUse.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] : anchorRank[0];
+  T = {kind, id, ids, rows, profile, anchor, anchorUse, roleOf}; _group.set(key, T); return T;
+}
+const ROWCAP = 80;
+function drawStack(){
+  const T = buildGroup(st.group.kind, st.group.id), rows = T.rows.slice(0, ROWCAP);
+  if(!rows.length){ $('mapwrap').innerHTML = `<div class="empty">no island passes the tier filter · a core gene such as blaCMY has only tier-3 windows: choose tier 3 or all</div>`; $('fitnote').textContent = ""; return; }
+  const avail = Math.max(650, ($('mapwrap').clientWidth || 1000) - 2), GUT = 150, MR = 20;
+  let lo = Math.min(...rows.map(r => r.lo)), hi = Math.max(...rows.map(r => r.hi));
+  const pad = Math.max(0.01 * (hi - lo), 150); lo -= pad; hi += pad;
+  const RH = 26, HALF = 9, top = 12, W = avail, plotW = W - GUT - MR, H = top + rows.length * RH + 46;
+  const xs = bp => GUT + (bp - lo) / (hi - lo) * plotW, cap = Math.max(4, 0.012 * plotW), p = [];
+  const yAxis = top + rows.length * RH + 14;
+  p.push(`<line class="sanchor" x1="${xs(0).toFixed(1)}" y1="${top - 6}" x2="${xs(0).toFixed(1)}" y2="${yAxis}"/>`);
+  rows.forEach((r, k) => { const yB = top + k * RH + RH / 2;
+    p.push(`<text class="srow${r.n === st.isl ? " cur" : ""}" x="4" y="${yB + 4}" data-n="${r.n}">${islandId(r.n)}</text>`);
+    r.genes.forEach(x => { const x0 = xs(x.s), x1 = xs(x.e), sty = styleOf(x.g), pts = arrowPts(x0, x1, x.strand, yB, HALF, cap);
+      const cls = "gene" + (st.hl != null ? (x.g.cluster === st.hl ? " hl" : " dimmed") : "") + (st.cluster != null && x.g.cluster === st.cluster ? " sel" : "");
+      p.push(`<polygon class="${cls}" data-n="${r.n}" data-i="${x.i}" data-c="${x.g.cluster}" points="${pts.map(q => q[0].toFixed(1) + "," + q[1].toFixed(1)).join(" ")}" fill="${sty.fill}" stroke="${sty.stroke}" stroke-width="${sty.sw}"${sty.dash ? ' stroke-dasharray="3 2"' : ''}/>`);
+      if(sty.dot) p.push(`<circle cx="${(0.5 * (x0 + x1)).toFixed(1)}" cy="${yB}" r="2.2" fill="${sty.stroke}"/>`); }); });
+  p.push(`<line class="gaxis" x1="${GUT}" y1="${yAxis}" x2="${W - MR}" y2="${yAxis}"/>`);
+  const step = [1000, 2000, 5000, 10000, 20000].find(v => (hi - lo) / v <= 9) || 50000;
+  for(let bp = Math.ceil(lo / step) * step; bp <= hi; bp += step){ const x = xs(bp).toFixed(1);
+    p.push(`<line class="gtick" x1="${x}" y1="${yAxis}" x2="${x}" y2="${yAxis + 5}"/><text class="gaxlab" x="${x}" y="${yAxis + 18}" text-anchor="middle">${bp === 0 ? "anchor" : (bp > 0 ? "+" : "−") + Math.abs(bp / 1000) + " kb"}</text>`); }
+  p.push(`<text class="gcap" x="${GUT}" y="${H - 4}">${T.kind === "class" || T.kind === "subclass" ? `distance from each island's ${esc(String(T.id).toLowerCase())} gene · ${T.anchorUse.size} different anchor clusters` : `distance from ${esc(T.anchor >= 0 ? (T.profile.find(q => q.c === T.anchor) || {}).label : "anchor")} · ${esc(clusterId(T.anchor))}`} · every island flipped so it points right</text>`);
+  $('mapwrap').innerHTML = `<svg class="gmap" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${T.ids.length} islands, aligned">${p.join("")}</svg>`;
+  $('fitnote').innerHTML = `${T.rows.length > rows.length ? `${rows.length} of ${fmt(T.rows.length)} islands drawn, in id order · the table counts all of them` : `${T.rows.length} island${T.rows.length === 1 ? "" : "s"}, aligned`} · click a row or an arrow to open that island`;
+  wireStack();
+}
+function wireStack(){
+  const svg = $('mapwrap').querySelector('svg'), tip = $('tip'), T = buildGroup(st.group.kind, st.group.id);
+  svg.addEventListener('mousemove', e => {
+    const el = e.target.closest('.gene'); if(!el){ hideTip(tip); return; }
+    const o = island(+el.dataset.n), g = o.genes[+el.dataset.i], sty = styleOf(g), q = T.profile.find(x => x.c === g.cluster);
+    showTip(tip, e, `<div class="h">${esc(g.label || "unlabelled")}${g.pseudo ? ' <span class="chip mustard">pseudogene</span>' : ''}</div><table>
+      <tr><td>island</td><td>${islandId(o.n)}</td></tr><tr><td>role</td><td>${esc(sty.label)}</td></tr>
+      <tr><td>cluster</td><td>${g.cluster >= 0 ? clusterId(g.cluster) : "none"}</td></tr>
+      ${q ? `<tr><td>in ${T.kind === "type" ? "type" : "these"}</td><td>${q.n} of ${T.ids.length} islands (${Math.round(100 * q.n / T.ids.length)}%)</td></tr>` : ""}</table>`);
+  });
+  svg.addEventListener('mouseleave', () => hideTip(tip));
+  svg.addEventListener('click', e => { const el = e.target.closest('.gene, .srow'); if(!el) return; hideTip(tip); select(+el.dataset.n); });
+}
+function profileTable(){
+  const T = buildGroup(st.group.kind, st.group.id), N = T.ids.length;
+  if(!N){ $('ngenes').textContent = ""; $('genes').innerHTML = ""; return; }
+  $('ngenes').textContent = `${T.profile.length} clusters in ${fmt(N)} islands`;
+  $('genes').className = "data-table genes-table prof";
+  $('genes').innerHTML = `<thead><tr><th>label</th><th>role</th><th>cluster</th><th class="bar">islands carrying it</th><th class="r">n</th><th class="r">offset</th></tr></thead><tbody>` +
+    T.profile.map(q => { const sty = ROLE_STYLE[q.role] || ROLE_STYLE.other;
+      return `<tr tabindex="0" data-c="${q.c}"${q.c === st.hl ? ' class="hl"' : ''}><td class="k lab">${esc(q.label)}${q.anchorN ? ` <span class="chip">anchor${T.anchorUse.size > 1 ? ` in ${Math.round(100 * q.anchorN / N)}%` : ""}</span>` : ''}</td>
+        <td>${roleChip(q.role)}</td>
+        <td><a href="${link.cluster(q.c)}">${clusterId(q.c)}</a></td>
+        <td class="bar"><span class="bv ${sty.colour}"><i style="width:${(100 * q.n / N).toFixed(1)}%"></i></span></td>
+        <td class="r">${fmt(q.n)} <span class="mute">· ${Math.round(100 * q.n / N)}%</span></td>
+        <td class="r">${q.pos >= 0 ? "+" : "−"}${(Math.abs(q.pos) / 1000).toFixed(1)} kb</td></tr>`; }).join("") + `</tbody>`;
+  const tb = $('genes').querySelector('tbody');
+  const hl = c => { st.hl = c; document.querySelectorAll('#mapwrap .gene').forEach(el => { el.classList.toggle('hl', c != null && +el.dataset.c === c); el.classList.toggle('dimmed', c != null && +el.dataset.c !== c); });
+    tb.querySelectorAll('tr').forEach(tr => tr.classList.toggle('hl', c != null && +tr.dataset.c === c)); };
+  tb.onmouseover = e => { const tr = e.target.closest('tr'); if(tr) hl(+tr.dataset.c); };
+  tb.onmouseleave = () => hl(null);
+  tb.onfocusin = e => { const tr = e.target.closest('tr'); if(tr) hl(+tr.dataset.c); };
+  tb.onclick = e => { if(e.target.closest('a')) return; const tr = e.target.closest('tr'); if(!tr) return; st.cluster = +tr.dataset.c; QS.set({cluster: clusterId(st.cluster)}); rail(); if(st.group.kind === "cluster") groupView("cluster", st.cluster); };
+}
+function groupView(kind, id){
+  if(kind === "type" && !ISL.types[id]) return;
+  st.view = "type"; st.group = {kind, id}; st.hl = null;
+  QS.set(kind === "type" ? {type: id, view: null} : {type: null, view: "aligned"});
+  if(kind === "class" && st.amrclass !== id){ st.amrclass = id; $('fAmr').value = id; QS.set({amrclass: id}); rail(); }
+  if(kind === "subclass" && st.subclass !== id){ st.subclass = id; subOptions(); $('fSub').value = id; QS.set({subclass: id}); rail(); }
+  $('fitseg').style.display = "none"; $('mapwrap').classList.add('stack');
+  const back = `<button class="btn btn--ghost" id="backIsl">back to ${st.isl != null ? islandId(st.isl) : "the island"}</button>`;
+  if(kind === "type"){ const T = ISL.types[id];
+    $('meta').innerHTML = `<b>type ${id}</b><span class="badge badge--fg">${fmt(T[TF.n_islands])} islands</span><span>${esc(D("rtier", T[TF.recurrence_tier]).replace(/_/g, " "))}</span><span>${esc(D("families", T[TF.amr_gene_families]))}</span>${back}`;
+    typePanel(id); }
+  else if(kind === "cluster"){ const G = buildGroup(kind, id), q = G.profile.find(x => x.c === id) || {};
+    $('meta').innerHTML = `<b>${clusterId(id)}</b><span class="badge badge--coral">${fmt(G.ids.length)} islands</span><span>${esc(q.label || "")}</span><span class="mute">every island carrying it, aligned on it</span>${back}`; }
+  else { const G = buildGroup(kind, id), top = [...G.anchorUse.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4);
+    $('meta').innerHTML = `<b>${esc(String(id).toLowerCase())}</b><span class="badge badge--coral">${fmt(G.ids.length)} islands</span><span class="mute">aligned on each island's ${kind} gene · ${G.anchorUse.size} anchor clusters: ${top.map(([c, k]) => `${esc((G.profile.find(x => x.c === c) || {}).label || clusterId(c))} ${Math.round(100 * k / G.ids.length)}%`).join(", ")}${G.anchorUse.size > 4 ? ", …" : ""}</span>${back}`; }
+  $('backIsl').onclick = () => { if(st.isl != null) select(st.isl, true); };
+  $('genesLabel').textContent = kind === "type" ? "conservation across the type" : kind === "cluster" ? "conservation across these islands" : `conservation across ${String(id).toLowerCase()} islands`;
+  drawStack(); profileTable();
+}
+const typeView = t => groupView("type", t);
+function listType(t){
+  $('q').value = ""; $('fSpecies').value = ""; $('fPds').value = ""; st.cluster = null; QS.set({cluster: null}); st.typeFilter = t; setTier("");
+  typeView(t);
+}
+
+/* ============================ record, type, genes ============================ */
+function kv(rows){ return '<dl class="kv">' + rows.filter(r => r[1] != null && r[1] !== "").map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("") + '</dl>'; }
+const chips = (s, cls) => s ? s.split(";").map(x => `<span class="chip ${cls || ""}">${esc(x)}</span>`).join(" ") : "";
+function metaStrip(){
+  const r = rec(st.isl), o = island(st.isl);
+  $('meta').innerHTML = `<b>${islandId(st.isl)}</b><span class="badge badge--${tierBadge(r[F.tier])}">${tierName(r[F.tier])}</span>
+    <span><i>${esc(D("species", r[F.species]))}</i></span><span>${esc(D("target", r[F.target]))}</span>
+    <span>${fmt(o.lo)}–${fmt(o.hi)}</span><span><b>${r[F.n_genes]}</b> genes</span><span><b>${r[F.n_anchor]}</b> resistance</span>
+    ${r[F.type] >= 0 ? `<span>type <b>${r[F.type]}</b></span>` : ""}`;
+}
+function panel(){
+  const r = rec(st.isl), o = island(st.isl);
+  const trunc = D("truncation", r[F.truncation]);
+  $('panel').innerHTML = `<div class="badges" style="margin-bottom:12.5px">
+      <span class="badge badge--${tierBadge(r[F.tier])}">${tierName(r[F.tier])}</span>
+      ${r[F.integron] ? '<span class="badge badge--mustard">integron</span>' : ''}
+      ${trunc !== "none" ? `<span class="badge">truncated · ${esc(trunc)}</span>` : ''}
+      ${r[F.window_complete] ? '' : '<span class="badge">window incomplete</span>'}</div>` + kv([
+    ["island", `<b>${islandId(st.isl)}</b>`],
+    ["isolate", esc(D("target", r[F.target]))],
+    ["species", `<i>${esc(D("species", r[F.species]))}</i>`],
+    ["SNP lineage", r[F.pds] >= 0 ? esc(D("pds", r[F.pds])) : '<span class="mute">none</span>'],
+    ["contig", `${esc(D("contig", r[F.contig]))}<br><span class="mute">${fmt(o.lo)}–${fmt(o.hi)} · ${spanOf(r).toFixed(1)} kb · from ORF ${fmt(r[F.ord_lo])}</span>`],
+    ["genes", `${r[F.n_genes]} <span class="mute">in ${r[F.n_clusters]} clusters · ${r[F.n_pseudo]} pseudogenes · ${pct(r[F.frac_hypothetical_x1000], 0)} hypothetical</span>`],
+    ["window", `${pct(r[F.frac_window_x1000], 0)} of the window${r[F.window_complete] ? '' : ' <span class="mute">· incomplete</span>'}`],
+    ["resistance", `${r[F.n_anchor]} <span class="mute">· ${r[F.n_anchor_cargo]} acquired · ${r[F.n_anchor_core]} chromosomal · ${r[F.n_anchor_point]} point · ${esc(D("profile", r[F.anchor_profile]).replace(/_/g, " "))}</span>`],
+    ["families", chips(D("families", r[F.amr_gene_families]), "coral")],
+    ["classes", chips(D("amrclass", r[F.amr_classes]))],
+    ["stress · virulence", `${r[F.n_stress_genes]} <span class="mute">·</span> ${r[F.n_virulence_genes]}`],
+    ["mobile elements", `${r[F.n_mge_genes]} <span class="mute">(${pct(r[F.frac_mge_x1000], 0)})</span>${r[F.mge_kinds] >= 0 ? '<br>' + chips(D("mge", r[F.mge_kinds]).replace(/_/g, " "), "mustard") : ''}`],
+  ]);
+  typePanel(r[F.type]);
+}
+function typePanel(t){
+  const T = ISL.types[t];
+  if(!T){ $('typePanel').innerHTML = `<div class="mute">no architecture type assigned</div>`; return; }
+  const rt = D("rtier", T[TF.recurrence_tier]).replace(/_/g, " ");
+  $('typePanel').innerHTML = `<div class="badges" style="margin-bottom:12.5px"><span class="badge badge--fg">type ${t}</span><span class="badge badge--${/cross/.test(rt) ? "teal" : ""}">${esc(rt)}</span></div>` + kv([
+    ["islands", `${fmt(T[TF.n_islands])} <span class="mute">in ${fmt(T[TF.n_genomes])} genomes, ${fmt(T[TF.n_pds])} lineages, ${T[TF.n_species]} species</span>`],
+    ["clonality", `${(T[TF.clonality_x100] / 100).toFixed(2)} <span class="mute">islands per lineage, 1 = purely clonal</span>`],
+    ["families", chips(D("families", T[TF.amr_gene_families]), "coral")],
+    ["median genes", T[TF.median_n_genes]],
+    ["truncated", pct(T[TF.frac_truncated_x1000], 0)], ["with MGE", pct(T[TF.frac_with_mge_x1000], 0)], ["with integron", pct(T[TF.frac_integron_x1000], 0)],
+    ["representative", `<button class="btn btn--ghost" data-n="${T[TF.rep_island]}" id="repBtn">${islandId(T[TF.rep_island])}</button>`],
+    ["same type", `<button class="btn btn--ghost btn--wrap" id="sameType">align ${T[TF.n_islands] > ROWCAP ? `${ROWCAP} of ${fmt(T[TF.n_islands])} islands` : `the ${fmt(T[TF.n_islands])} island${T[TF.n_islands] === 1 ? "" : "s"}`}, count all</button>`],
+  ]);
+  $('repBtn').onclick = () => select(T[TF.rep_island]);
+  $('sameType').onclick = () => listType(t);
+}
+function genesTable(){
+  const o = island(st.isl);
+  $('ngenes').textContent = o.genes.length;
+  $('genes').innerHTML = `<thead><tr><th>#</th><th>label</th><th>role</th><th>cluster</th><th class="r">start</th><th class="r">aa</th></tr></thead><tbody>` +
+    o.genes.map((g, i) => { const s = styleOf(g);
+      return `<tr tabindex="0" data-i="${i}"${i === st.gene ? ' class="active"' : ''}><td class="mute">${i + 1}</td><td class="k lab">${esc(g.label || "")}${g.pseudo ? ' <span class="chip mustard">ps</span>' : ''}</td>
+        <td>${roleChip(g.role)}</td>
+        <td>${g.cluster >= 0 ? `<a href="${link.cluster(g.cluster)}">${clusterId(g.cluster)}</a>` : '<span class="dim">—</span>'}</td>
+        <td class="r">${fmt(g.s)} ${g.strand === 1 ? "+" : "−"}</td><td class="r">${Math.max(1, Math.round((g.e - g.s) / 3) - 1)}</td></tr>`; }).join("") + `</tbody>`;
+  const tb = $('genes').querySelector('tbody');
+  tb.onclick = e => { if(e.target.closest('a')) return; const tr = e.target.closest('tr'); if(tr) selectGene(+tr.dataset.i); };
+  tb.onkeydown = e => { if(e.key === "Enter"){ const tr = e.target.closest('tr'); if(tr) selectGene(+tr.dataset.i); } };
+  if(st.gene >= 0){ const tr = tb.querySelector('tr.active'); if(tr) tr.scrollIntoView({block: "nearest"}); }
+}
+$('copyId').onclick = () => { if(st.isl != null) copyText(islandId(st.isl), $('copyId')); };
+
+/* ============================ select ============================ */
+function select(n, keepGene){
+  if(!GM.g[n]) return;
+  st.isl = n; if(!keepGene) st.gene = -1;
+  st.view = "island"; st.hl = null; QS.set({island: islandId(n), type: null, view: null});
+  $('fitseg').style.display = ""; $('mapwrap').classList.remove('stack'); $('genes').className = "data-table genes-table";
+  $('genesLabel').textContent = "genes";
+  document.querySelectorAll('#rail .irow').forEach(b => b.setAttribute('aria-current', String(+b.dataset.n === n)));
+  const cur = document.querySelector('#rail .irow[aria-current="true"]'); if(cur) cur.scrollIntoView({block: "nearest"});
+  metaStrip(); drawMap(); panel(); genesTable();
+}
+
+/* ============================ distribution ============================ */
+let distDone = null;
+function distView(){
+  if(distDone === st.tier) return; distDone = st.tier;
+  const S = ISL.isl.filter(tierOK), NS = S.length;
+  const tierLabel = st.tier === "12" ? "tiers 1 and 2" : st.tier === "" ? "all three tiers" : `tier ${+st.tier + 1} only`;
+  const top = (m, k, dk, n, cls) => [...m.entries()].filter(([v]) => v >= 0).sort((a, b) => b[1] - a[1]).slice(0, n).map(([v, c]) => [D(dk, v) || "none", c, cls, v]);
+  const frame = (label, body, note) => `<div class="frame"><span class="frame__label">${label}</span><div class="frame__body">${body}${note ? `<div class="note" style="padding:10px 0 0">${note}</div>` : ""}</div></div>`;
+  const sp = top(countBy("species", S), "species", "species", 17), fam = top(countBy("amr_gene_families", S), "f", "families", 25, "coral");
+  const clsMap = new Map(); for(const r of S) for(const t of tokens(D("amrclass", r[F.amr_classes]))) clsMap.set(t, (clsMap.get(t) || 0) + 1);
+  const cls = [...clsMap.entries()].sort((a, b) => b[1] - a[1]).map(([t, c]) => [t.toLowerCase(), c, "coral", t]);
+  const mge = top(countBy("mge_kinds", S), "m", "mge", 15, "mustard");
+  const tier = countBy("tier", S), integ = countBy("integron", S), tr = countBy("truncation", S);
+  const bins = [3, 5, 8, 12, 16, 24, 32, 48], hist = new Array(bins.length + 1).fill(0);
+  for(const r of S){ const g = r[F.n_genes]; let k = 0; while(k < bins.length && g > bins[k]) k++; hist[k]++; }
+  const histRows = hist.map((c, k) => [k === 0 ? `≤${bins[0]} genes` : k < bins.length ? `${bins[k - 1] + 1}–${bins[k]}` : `>${bins[bins.length - 1]}`, c]);
+  const types = Object.entries(ISL.types).sort((a, b) => b[1][TF.n_islands] - a[1][TF.n_islands]).slice(0, 20)
+    .map(([t, T]) => [`type ${t} · ${D("families", T[TF.amr_gene_families]) || "?"}`, T[TF.n_islands], /cross/.test(D("rtier", T[TF.recurrence_tier])) ? "teal" : "", t]);
+  const cooc = [...ISL.cooc].sort((a, b) => b[4] - a[4]).slice(0, 25).map(c => [`${D("gene", c[2])} + ${D("gene", c[3])}`, c[4], "coral", c[0]]);
+  $('dist').innerHTML =
+    frame(`islands by species <span class="n">${fmt(NS)} · ${tierLabel}</span>`, barsHTML(sp, null, {click: true}), "click a species to filter the islands tab · every chart here follows the tier filter of the islands tab") +
+    frame("tier · integron · truncation", barsHTML([["tier 1, ≥2 acquired", tier.get(0) || 0, "coral"], ["tier 2, 1 acquired", tier.get(1) || 0], ["tier 3, core anchor only", tier.get(2) || 0], ["integron integrase", integ.get(1) || 0, "mustard"], ["no integron", integ.get(0) || 0],
+      ...[...tr.entries()].map(([v, c]) => [`truncation ${D("truncation", v)}`, c])], NS)) +
+    frame("genes per island", barsHTML(histRows)) +
+    frame("resistance family sets", barsHTML(fam), "top 25 of " + fmt(CD.families.length) + " distinct sets; click to filter") +
+    frame("resistance classes", barsHTML(cls, null, {click: true}), "islands carrying at least one gene of the class; click to see them aligned on that gene") +
+    frame("mobile element kinds", barsHTML(mge.map(r => [r[0].replace(/_/g, " "), r[1], r[2], r[3]]))) +
+    frame("largest architecture types", barsHTML(types, null, {click: true}), "click to see the type's islands aligned") +
+    frame("co-occurring resistance families", barsHTML(cooc, null, {format: v => fmt(v) + " lineages"}), "pairs found together in the most SNP lineages; " + fmt(ISL.cooc.length) + " pairs in all");
+  const frames = $('dist').querySelectorAll('.frame');
+  frames[0].onclick = e => { const b = e.target.closest('button.bl'); if(!b) return; $('fSpecies').value = b.dataset.v; goTab("islands"); rail(); };
+  frames[3].onclick = e => { const b = e.target.closest('button.bl'); if(!b) return; $('q').value = b.textContent; goTab("islands"); rail(); };
+  frames[4].onclick = e => { const b = e.target.closest('button.bl'); if(!b) return; goTab("islands"); groupView("class", b.dataset.v); };
+  frames[6].onclick = e => { const b = e.target.closest('button.bl'); if(!b) return; goTab("islands"); listType(+b.dataset.v); };
+}
+
+/* ============================ how to read ============================ */
+$('howto').innerHTML = `
+<h3>what an island is</h3>
+<p>A <b>resistance island</b> is a window of consecutive genes around one or more resistance anchors on one contig of one isolate. The pipeline (steps 16-19) calls the anchors from AMRFinderPlus, extends the window to the flanking backbone, and clusters the resulting gene content into <b>architecture types</b>. This page shows <b>tier 1</b> islands (two or more acquired resistance clusters) and <b>tier 2</b> (exactly one). The tier-3 backbone-only controls exist to calibrate the tiering and are not browsable.</p>
+<h3>tier 3, the chromosomal windows</h3>
+<p>Every genome also gets a window around each <b>core</b> resistance gene it carries, blaCMY, gyrA, parC and the like, whether or not an acquired gene sits nearby. These <b>tier-3 backbone windows</b> exist to calibrate the tiering, and they are not islands in the mobile sense: they are the chromosomal context of an intrinsic gene, nearly identical from genome to genome. They are hidden by default. The tier filter shows them, alone or with the rest, and every count on this page, the distribution tab and the aligned views follow that filter. A cluster filter on a core gene such as <code>blaCMY</code> therefore lists nothing until tier 3 is switched on.</p>
+<h3>the gene map</h3>
+<p>One arrow per ORF, pointing in its coding direction, in the contig's own coordinates. Positions are stored to the nearest ${BP} bp, so every coordinate is within ${BP / 2} bp of the annotation. <b>Fit</b> puts the whole island in view; <b>detail</b> gives every gene about 65 px and scrolls, which is the only way to read all the labels. Labels that would overprint are dropped, never stacked, and analysed genes win.</p>
+<p>The colour is the gene's <b>role</b>, and identity is carried by the outline rather than the fill:</p>
+<div class="legend" style="margin-bottom:15px">${legendHTML()}</div>
+<ul>
+<li><b>coral</b> is resistance: solid fill for an acquired (cargo) gene, faint fill for a chromosomal backbone gene that carries a resistance annotation, no fill with a centre dot for a point-mutation target such as <code>gyrA</code>.</li>
+<li><b>teal</b> is a stress-response cluster and <b>purple</b> a virulence cluster from the other two cluster sets.</li>
+<li><b>mustard</b> is a mobile-element gene: transposase, integrase, recombinase, relaxase, replication. Dashed and pale when it is a pseudogene, which is how a disrupted transposase looks.</li>
+<li><b>grey</b> is everything else. Green is deliberately not a gene role: it means pass or conserved elsewhere in these pages, so the legend cannot be misread.</li>
+</ul>
+<p>A gene's label is its cluster's usual product name. ${pct(1000 * 0.187, 0)} of genes carry their own label instead, where the annotation of that copy differs from the cluster consensus, and the tooltip says so.</p>
+<h3>the type view</h3>
+<p><b>Show the islands aligned</b> in the architecture-type panel (or a type in the distribution tab) draws every island of that type on one coordinate system, aligned on the cluster the type shares most often and flipped so that cluster always points right. Islands of one type then read as columns: a neighbour that is always there lines up, one present in a third of them reads as a gap. The table beneath counts, for every cluster seen in those islands, how many of the type's islands carry it and its median offset from the anchor; hover a row to pick that cluster out in every island, click it to filter the rail to the islands that carry it. Rows in the drawing are capped at ${ROWCAP}; the table always covers the whole type.</p>
+<p>The same view exists for an <b>AMR class or subclass</b>: pick one in the filter panel, or a class in the distribution tab, and every island carrying a resistance gene of that class is aligned on that gene, whichever cluster it is. A class is carried by many clusters, so the columns are looser than in the cluster view; the table shows which clusters served as the anchor and in what share of the islands, and what travels with the class.</p>
+<p>The same view exists for a cluster: with a cluster filter active, <b>show the islands aligned on</b> it draws every island carrying that cluster, aligned on the cluster itself, with the same conservation table. Arriving from the clusters page opens it directly. A type is the narrower question, the same arrangement of the same informative genes; the cluster view is the wider one, everything the gene travels with.</p>
+<h3>the record</h3>
+<p><b>Window</b> is how much of the intended flanking window the contig could provide; an island at a contig end is <b>truncated</b> on that side. <b>Clonality</b> of a type is islands per SNP lineage, so 1.00 means every occurrence is in a different lineage and the island has spread horizontally; a high value means one clone carries it. <b>Recurrent cross-lineage</b> types are the ones that matter for transmission.</p>
+<h3>links</h3>
+<p>Every cluster name is a link into the <a href="clusters.html">clusters</a> page, where an analysed cluster's record includes its predicted structure. The address bar carries the selected island, so a link to this page opens on that island. <code>islands.html?cluster=CFR-000010</code> lists every island carrying a cluster.</p>`;
+
+/* ============================ boot ============================ */
+const goTab = wireTabs(name => { if(name === "distribution") distView(); });
+{ const qc = parseClusterArg(QS.get("cluster")); if(qc != null) st.cluster = qc; }
+{ const t = QS.get("tier"); if(t != null && ["", "0", "1", "2", "12"].includes(t)){ st.tier = t; $('fTier').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === t))); } }
+const qType = QS.get("type"), qView = QS.get("view"), qIsland = QS.get("island");   /* read before select(), which clears them */
+{ const a = QS.get("amrclass"); if(a && [...$('fAmr').options].some(o => o.value === a)){ st.amrclass = a; $('fAmr').value = a; }
+  const b = QS.get("subclass"); if(b){ subOptions(); if([...$('fSub').options].some(o => o.value === b)){ st.subclass = b; $('fSub').value = b; } } }
+const first = rail();
+{ const qi = parseIslandArg(QS.get("island"));
+  if(qi != null && GM.g[qi]) select(qi); else if(first.length) select(first[0]); }
+addEventListener('resize', debounce(() => { if(st.view === "type") drawStack(); else if(st.fit && st.isl != null) drawMap(); }, 200));
+if(qType != null && ISL.types[+qType]) listType(+qType);
+else if(st.cluster != null && (qView === "aligned" || qIsland == null) && islandsOf(st.cluster).length) groupView("cluster", st.cluster);
+else if(st.subclass && (qView === "aligned" || qIsland == null) && islandsOfSub(st.subclass).length) groupView("subclass", st.subclass);
+else if(st.amrclass && (qView === "aligned" || qIsland == null) && islandsOfClass(st.amrclass).length) groupView("class", st.amrclass);
+</script>
+</body>
+</html>

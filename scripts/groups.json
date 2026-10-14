@@ -1,0 +1,108 @@
+{
+  "_comment": "One entry per NCBI Pathogen Detection organism group. Paths are relative to latest_snps/. Select with --group <name> (default: first entry).",
+  "Citrobacter_freundii": {
+    "pdg": "PDG000000039.1314",
+    "taxgroup": "Citrobacter_freundii",
+    "microbigge_tsv": "../microbigge-C_freundii.tsv",
+    "antibiogram_query": "antibiogram[filter] AND Citrobacter[Organism]",
+    "cluster_prefix": "CFR",
+    "island_prefix": "CFRI"
+  },
+  "Citrobacter_portucalensis": {
+    "pdg": "PDG000000147.9",
+    "taxgroup": "Citrobacter_freundii",
+    "microbigge_tsv": "../Citrobacter_portucalensis/microbigge-C_portucalensis.tsv",
+    "antibiogram_query": "antibiogram[filter] AND Citrobacter portucalensis[Organism]",
+    "cluster_prefix": "CPO",
+    "island_prefix": "CPOI"
+  },
+  "Clostridioides_difficile": {
+    "pdg": "PDG000000045.850",
+    "taxgroup": "Clostridioides_difficile",
+    "microbigge_tsv": "../microbigge-Clostridioides_difficile.tsv",
+    "antibiogram_query": "antibiogram[filter] AND Clostridioides difficile[Organism]",
+    "key_subclasses": [
+      "VANCOMYCIN",
+      "NITROIMIDAZOLE",
+      "QUINOLONE",
+      "ERYTHROMYCIN",
+      "TETRACYCLINE",
+      "LINEZOLID",
+      "RIFAMYCIN"
+    ],
+    "marker_subclass": "QUINOLONE",
+    "marker_column": "fluoroquinolone_genes",
+    "spot_checks": {
+      "gyrA_T82I": [
+        "QUINOLONE",
+        "QUINOLONE"
+      ],
+      "erm(B)": [
+        "LINCOSAMIDE/MACROLIDE/STREPTOGRAMIN",
+        "CLINDAMYCIN/ERYTHROMYCIN/STREPTOGRAMIN B"
+      ],
+      "tet(M)": [
+        "TETRACYCLINE",
+        "TETRACYCLINE"
+      ],
+      "nimB-Cd": [
+        "NITROIMIDAZOLE",
+        "NITROIMIDAZOLE"
+      ]
+    },
+    "cluster_prefix": "CDI",
+    "island_prefix": "CDII"
+  },
+  "Clostridium_botulinum": {
+    "pdg": "PDG000000059.230",
+    "taxgroup": "Clostridium_botulinum",
+    "microbigge_tsv": "../microbigge-Clostridium_botulinum.tsv",
+    "antibiogram_query": "antibiogram[filter] AND Clostridium botulinum[Organism]",
+    "key_subclasses": [
+      "CHLORAMPHENICOL",
+      "LINCOSAMIDE",
+      "LINEZOLID",
+      "FOSFOMYCIN",
+      "STREPTOGRAMIN",
+      "TETRACYCLINE"
+    ],
+    "marker_subclass": null,
+    "marker_column": null,
+    "spot_checks": {
+      "tet(M)": [
+        "TETRACYCLINE",
+        "TETRACYCLINE"
+      ]
+    },
+    "cluster_prefix": "CBO",
+    "island_prefix": "CBOI"
+  },
+  "Clostridium_perfringens": {
+    "pdg": "PDG000000061.366",
+    "taxgroup": "Clostridium_perfringens",
+    "microbigge_tsv": "../microbigge-Clostridium_perfringens.tsv",
+    "antibiogram_query": "antibiogram[filter] AND Clostridium perfringens[Organism]",
+    "key_subclasses": [
+      "TETRACYCLINE",
+      "ERYTHROMYCIN",
+      "LINCOSAMIDE",
+      "OXAZOLIDINONE",
+      "VANCOMYCIN",
+      "STREPTOMYCIN"
+    ],
+    "marker_subclass": "OXAZOLIDINONE",
+    "marker_column": "oxazolidinone_genes",
+    "spot_checks": {
+      "tet(M)": [
+        "TETRACYCLINE",
+        "TETRACYCLINE"
+      ],
+      "erm(B)": [
+        "LINCOSAMIDE/MACROLIDE/STREPTOGRAMIN",
+        "CLINDAMYCIN/ERYTHROMYCIN/STREPTOGRAMIN B"
+      ]
+    },
+    "cluster_prefix": "CPE",
+    "island_prefix": "CPEI"
+  }
+}

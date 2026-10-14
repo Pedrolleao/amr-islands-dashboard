@@ -1,0 +1,104 @@
+
+===== 31_cluster_payload.py =====
+806 analysed clusters; 208,757 in the pangenome
+cluster -> island index: 11,344 clusters appear in a kept island
+wrote Dashboard/clusters.json  0.93 MB
+wrote Dashboard/cluster_index.json  4.57 MB
+
+checks
+  deep records: 806 (expected 806); with variation: 530; with domains: 770; with fold hits: 758
+  distinct Pfam families referenced: 181
+  index: 208,757 clusters, 11,514 distinct products, 9,877 distinct architectures
+  analysed clusters flagged in the index: 806
+  sizes: clusters.json 0.93 MB, cluster_index.json 4.57 MB
+
+done in 3 s
+
+===== 32_island_payload.py =====
+islands: 66,005 kept of 66,005 (tier1_multi_acquired + tier2_single_acquired + tier3_core_only)
+wrote Dashboard/islands.json  7.95 MB
+
+checks
+  islands: 66,005; tier1 17,665, tier2 29,256, tier3 19,084
+  island types referenced: 12,338 of 12,338 read (12,338 distinct ids in the kept set)
+  co-occurrence edges: 2,290
+  dictionaries: amrclass 346, contig 63,080, families 1,469, gene 156, mge 49, pds 806, profile 4, rtier 4, species 26, target 6,061, truncation 4
+  ids are unique: True
+  size 7.95 MB
+
+done in 1 s
+
+===== 33_island_genemap_payload.py =====
+66,005 islands kept; reading the gene table
+  gene table: 695,638 rows (2 s)
+  genes in kept islands: 695,638
+wrote Dashboard/genemaps.json  6.04 MB
+
+checks
+  islands packed: 66,005; genes: 695,638 (10.54 per island)
+  packed characters: 4,886,350 (7.02 per gene)
+  label overrides: 97,783 of 695,638 (14.1%); 1,556 of 11,344 clusters have more than one label
+  draw roles (8): amr_anchor_core, amr_anchor_mobile, amr_anchor_point, hypothetical, mge, other, stress, virulence
+  pseudogenes flagged: 44,098 (6.3%)
+  clusters referenced: 11,344; distinct override labels: 1,819
+  clusters with an AMR class: 409 (22 distinct class sets, 56 subclass sets)
+  size 6.04 MB
+
+done in 15 s
+
+===== 34_structure_payload.py =====
+wrote Dashboard/structures.json  1.66 MB
+
+checks
+  chains: 808; residues: 210,971
+  clusters represented: 806 (expected 806); folded by module: 1
+  chains with variation: 439; without: 369
+  sources: esmfold 800, colabfold 5, esmfold_by_domain 3
+  every non-module-parent row has a PDB
+  size 1.66 MB (7.86 bytes per residue)
+
+done in 10 s
+
+===== 37_antibiogram_payload.py =====
+1,156 defined tests on 75 isolates (7,287 in the group)
+wrote Dashboard/antibiograms.json  0.16 MB
+
+checks
+  isolates: 75; with tier-1/2 islands: 25; with tier-3 windows: 57; with a genome: 57
+  tests: 1,156 (S 652, I 47, R 457); antibiotics: 55
+  genotype rows: 355; families: 70; linked to an analysed cluster: 331
+  antibiotics without a subclass map: none
+  gene maps carried: 363 islands, 5,320 genes, 838 clusters referenced (decoded back and matched)
+  size 0.16 MB
+
+done in 1 s
+
+===== 35_build_pages.py =====
+[35] islands.html  14.06 MB  (template 55 KB)
+[35] clusters.html  7.22 MB  (template 47 KB)
+[35] antibiograms.html  0.22 MB  (template 41 KB)
+[35] 3 pages in /mnt/e/Lecture/GHE/Essay/Internship/latest_snps/Citrobacter_freundii/Dashboard
+
+===== 36_verify_payloads.py =====
+decoding the payloads and comparing against the source tables
+  islands sampled: 100
+    cluster AMR class/subclass mismatches over all 11,344 referenced: 0
+    gene count mismatches: 0
+    islands whose genes are out of contig order: 0
+    coordinate mismatches beyond 5 bp: 0 (worst 5 bp)
+    role mismatches: 0; cluster mismatches: 0; pseudogene mismatches: 0
+  structures sampled: 20
+    length mismatches: 0
+    coordinates off by more than 0.06 A: 0 (worst 0.050 A)
+    confidence off by more than 0.6: 0 (worst 0.556)
+
+  payload sizes: antibiograms.json 0.16 MB, cluster_index.json 4.57 MB, clusters.json 0.93 MB, genemaps.json 6.04 MB, islands.json 7.95 MB, structures.json 1.66 MB
+  total 21.29 MB
+
+PASS - every sampled record decodes back to its source
+
+===== 35_build_pages.py =====
+[35] islands.html  14.07 MB  (template 55 KB)
+[35] clusters.html  7.22 MB  (template 47 KB)
+[35] antibiograms.html  0.23 MB  (template 41 KB)
+[35] 3 pages in /mnt/e/Lecture/GHE/Essay/Internship/latest_snps/Citrobacter_freundii/Dashboard

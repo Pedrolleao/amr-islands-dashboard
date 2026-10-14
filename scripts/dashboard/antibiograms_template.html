@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Antibiograms · <!--GROUP_NAME--></title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<!--CORE:css-->
+<style>
+.grid3{display:grid;grid-template-columns:330px minmax(0,1fr) 400px;gap:17.5px;align-items:start}
+@media (max-width:1600px){.grid3{grid-template-columns:330px minmax(0,1fr)}.grid3 > .col-r{grid-column:1 / -1}}
+@media (max-width:1100px){.grid3{grid-template-columns:1fr}.grid3 > .col-r{grid-column:auto}.rail{max-height:375px}}
+.filterbar{display:flex;flex-wrap:wrap;gap:12.5px 20px;align-items:flex-end}
+.filterbar .field{margin:0;min-width:220px}
+.res{display:inline-block;min-width:22px;text-align:center;font-size:11px;letter-spacing:.08em;padding:1px 6px;border:1px solid var(--border-strong);color:var(--fg-mute)}
+.res.R{color:var(--c-coral);border-color:var(--c-coral)} .res.S{color:var(--c-green);border-color:var(--c-green)} .res.I{color:var(--c-mustard);border-color:var(--c-mustard)}
+.bar3{display:flex;height:11px;border:1px solid var(--border-strong);margin:6px 0 4px;max-width:520px}
+.bar3 i{display:block;height:100%} .bar3 .r{background:var(--c-coral)} .bar3 .i{background:var(--c-mustard)} .bar3 .s{background:var(--c-green)}
+.assoc td.bar{min-width:100px;width:12%}
+.assoc .chip{white-space:normal}
+.assoc .bv{display:block;height:9px;border:1px solid var(--border-strong);position:relative;width:100%}
+.assoc .bv i{position:absolute;inset:0;right:auto;background:var(--c-coral)}
+.assoc .bv.grey i{background:var(--fg-dim)}
+.assoc tr.exp td.k{color:var(--fg)}
+.dist{display:grid;grid-template-columns:repeat(auto-fit,minmax(375px,1fr));gap:17.5px;align-items:start}
+.dist .frame{margin-bottom:0}
+.geneclass{margin-bottom:10px} .geneclass .lbl{margin-bottom:5px}
+.genechips{display:flex;flex-wrap:wrap;gap:5px}
+.genechips a{border:1px solid var(--border-strong);padding:1px 7px;font-size:11px;color:var(--fg);border-bottom:1px solid var(--border-strong)}
+.genechips a.exp{border-color:var(--c-coral);color:var(--c-coral)}
+.genechips span.noc{border:1px solid var(--border);padding:1px 7px;font-size:11px;color:var(--fg-mute)}
+.genechips .pt{border-style:dashed}
+.summary{font-size:12.5px;color:var(--fg-mute);margin-bottom:10px} .summary b{color:var(--fg)}
+.detail-note{font-size:12.5px;color:var(--fg-dim);margin-top:8px}
+#assocDetail:empty{display:none}
+.mapwrap{overflow:auto;border:1px solid var(--border);background:var(--bg-2);max-height:640px}
+.gmap{display:block} .gmap .gene{cursor:pointer} .gmap .gene:hover{stroke-width:2.2}
+.gmap .gene.hl{stroke:var(--fg);stroke-width:2.4}
+.genechips a.inisl::before,.genechips span.inisl::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--c-green);margin-right:6px;vertical-align:1px}
+.genechips a.hl,.genechips span.hl{background:var(--highlight)}
+.gmap .srow{font-family:var(--mono);font-size:11px;fill:var(--fg-mute);cursor:pointer} .gmap .srow:hover{fill:var(--fg)}
+.gmap .glab{font-family:var(--mono);font-size:10px;fill:var(--fg-mute);pointer-events:none} .gmap .glab.hi{fill:var(--fg)}
+.gmap .gaxis,.gmap .gtick{stroke:var(--border-strong)} .gmap .gaxlab{font-family:var(--mono);font-size:10px;fill:var(--fg-dim)}
+.gmap .gcap{font-family:var(--mono);font-size:10px;fill:var(--fg-dim);letter-spacing:.1em;text-transform:uppercase}
+.fitnote{font-size:12.5px;color:var(--fg-dim);margin:7.5px 0 10px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar__id">
+    <div class="id__head">measured susceptibility · <!--GROUP_NAME--></div>
+    <div class="id__name">Antibiograms <span class="light">/ what the isolates did in the lab</span></div>
+    <div class="id__sub">Every antibiogram NCBI holds for the group, beside the resistance genotype of the same isolate, so the annotation can be checked against the phenotype.</div>
+  </div>
+  <div class="topbar__meta">
+    <nav class="nav" aria-label="pages"><a href="islands.html">islands</a><a href="clusters.html">clusters</a><a href="antibiograms.html" aria-current="page">antibiograms</a></nav>
+    <div>
+      <div class="meta__row"><span>isolates tested</span><span id="mIso"></span></div>
+      <div class="meta__row"><span>tests</span><span id="mTests"></span></div>
+      <div class="meta__row"><span>antibiotics</span><span id="mAbx"></span></div>
+      <div class="meta__row"><span>built</span><span id="mBuilt"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="tabs" role="tablist">
+  <button role="tab" data-tab="assoc">genotype × phenotype</button>
+  <button role="tab" data-tab="isolates">isolates</button>
+  <button role="tab" data-tab="coverage">coverage</button>
+  <button role="tab" data-tab="howto">how to read</button>
+</div>
+
+<section data-pane="assoc" class="tabpane">
+  <div class="frame"><span class="frame__label">question</span><div class="frame__body">
+    <div class="filterbar">
+      <div class="field"><label class="lbl" for="sAbx">antibiotic</label><select class="inp" id="sAbx"></select></div>
+      <div class="field"><label class="lbl" for="sFam">gene family</label><select class="inp" id="sFam"></select></div>
+      <div class="field"><label class="lbl" for="sMin">minimum carriers</label><select class="inp" id="sMin"><option value="1">1</option><option value="3" selected>3</option><option value="5">5</option><option value="10">10</option></select></div>
+      <div class="field row"><button class="btn btn--ghost" id="tExp" aria-pressed="false">expected genes only</button><button class="btn btn--ghost" id="tClear">clear</button></div>
+    </div>
+  </div></div>
+  <div id="assocSummary"></div>
+  <div class="frame"><span class="frame__label" id="assocLabel">association</span><div class="frame__body frame__body--list"><div class="tablewrap" style="border:none;max-height:640px"><table class="data-table assoc" id="assoc"></table></div></div></div>
+  <div id="assocDetail"></div>
+</section>
+
+<section data-pane="isolates" class="tabpane">
+<div class="grid3">
+  <div class="col-l">
+    <div class="frame frame--tight"><span class="frame__label">filter</span><div class="frame__body">
+      <div class="field"><label class="lbl" for="q">search</label><input class="inp" id="q" placeholder="isolate, species, lineage, gene…" autocomplete="off"></div>
+      <div class="field"><label class="lbl" for="fSort">sort</label><select class="inp" id="fSort"><option value="id">isolate id</option><option value="r">resistant calls, most first</option><option value="n">tests, most first</option><option value="genes">resistance genes, most first</option></select></div>
+      <div class="field row"><button class="btn btn--ghost" id="fIsl" aria-pressed="false">with islands</button></div>
+    </div></div>
+    <div class="frame frame--tight"><span class="frame__label">isolates <span class="n" id="niso"></span></span><div class="frame__body frame__body--list"><div class="rail" id="rail"></div></div></div>
+  </div>
+  <div class="col-c">
+    <div class="frame"><span class="frame__label">antibiogram <span class="n" id="nab"></span></span><div class="frame__body frame__body--list"><div class="tablewrap" style="border:none;max-height:640px"><table class="data-table" id="abTable"></table></div></div></div>
+    <div class="frame"><span class="frame__label">resistance genotype <span class="n" id="ngenes"></span></span><div class="frame__body" id="genotype"></div></div>
+    <div class="frame" id="islFrame"><span class="frame__label">islands of this isolate <span class="n" id="nisl"></span></span><div class="frame__body">
+      <div class="mapwrap" id="mapwrap"></div><div class="fitnote" id="fitnote"></div><div class="legend" id="legend"></div></div></div>
+  </div>
+  <div class="col-r">
+    <div class="frame"><span class="frame__label">record</span><div class="frame__tools"><button class="btn btn--ghost" id="copyId">copy id</button></div><div class="frame__body" id="panel"></div></div>
+  </div>
+</div>
+</section>
+
+<section data-pane="coverage" class="tabpane"><div id="cov" class="dist"></div></section>
+<section data-pane="howto" class="tabpane"><div class="frame"><span class="frame__label">how to read</span><div class="frame__body prose" id="howto"></div></div></section>
+
+<div class="foot"><span id="footL"></span><span>islands · clusters · antibiograms — three self-contained pages, no server</span></div>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<!--DATA:__AB:antibiograms.json-->
+<!--CORE:js-->
+<script>
+/* ============================ data ============================ */
+const AB = window.__AB, DD = AB.dicts, ISO = AB.isolates || [];
+delete window.__AB;
+const st = {iso: null, abx: null, fam: null};
+const PH = ["S", "I", "R"], PHNAME = ["susceptible", "intermediate", "resistant"];
+const abxName = i => DD.antibiotic[i], famName = i => DD.family[i], symName = i => DD.symbol[i];
+const toks = s => s ? String(s).split(/[;\/]/).filter(Boolean) : [];
+/* gene row: [symbol, family, class, subclass, point, cluster, partial] */
+const G = {sym: 0, fam: 1, cls: 2, sub: 3, point: 4, cluster: 5, partial: 6};
+const T = {abx: 0, ph: 1, sign: 2, val: 3, units: 4, method: 5, std: 6};
+const geneTokens = g => new Set(toks(DD.subclass[g[G.sub]]).concat(toks(DD.class[g[G.cls]])));
+function expected(abx, g){ const want = AB.targets[abx] || []; if(!want.length) return false; const have = geneTokens(g); return want.some(t => have.has(t)); }
+const famsOf = iso => new Set(iso.genes.map(g => g[G.fam]));
+const testOf = (iso, abx) => iso.tests.find(t => t[T.abx] === abx);
+const measure = t => t[T.val] ? `${t[T.sign] === "==" ? "" : t[T.sign]}${t[T.val]} ${DD.units[t[T.units]] || ""}`.trim() : "";
+const famCluster = new Map(); ISO.forEach(i => i.genes.forEach(g => { if(g[G.cluster] >= 0 && !famCluster.has(g[G.fam])) famCluster.set(g[G.fam], g[G.cluster]); }));
+const famClass = new Map(); ISO.forEach(i => i.genes.forEach(g => { if(!famClass.has(g[G.fam])) famClass.set(g[G.fam], [DD.class[g[G.cls]], DD.subclass[g[G.sub]], g[G.point]]); }));
+const lineages = list => new Set(list.map(i => i.pds >= 0 ? "p" + i.pds : "i" + i.t)).size;
+
+/* ============================ header ============================ */
+const nTests = ISO.reduce((a, i) => a + i.tests.length, 0);
+$('mIso').textContent = `${fmt(ISO.length)} of ${fmt(AB.group_isolates)}`; $('mTests').textContent = fmt(nTests);
+$('mAbx').textContent = fmt((DD.antibiotic || []).length); $('mBuilt').textContent = AB.built;
+$('footL').textContent = `${META.group.replace(/_/g, " ")} · payloads built ${AB.built}`;
+
+/* ============================ genotype x phenotype ============================ */
+const abxTested = new Map(); ISO.forEach(i => i.tests.forEach(t => abxTested.set(t[T.abx], (abxTested.get(t[T.abx]) || 0) + 1)));
+const famCarriers = new Map(); ISO.forEach(i => famsOf(i).forEach(f => famCarriers.set(f, (famCarriers.get(f) || 0) + 1)));
+opts($('sAbx'), [...abxTested.entries()].sort((a, b) => b[1] - a[1] || abxName(a[0]).localeCompare(abxName(b[0]))).map(([a, n]) => [a, `${abxName(a)} · ${n} tested`]), "any antibiotic");
+opts($('sFam'), [...famCarriers.entries()].sort((a, b) => b[1] - a[1] || famName(a[0]).localeCompare(famName(b[0]))).map(([f, n]) => [f, `${famName(f)} · ${n} carriers`]), "any gene family");
+const kv = rows => '<dl class="kv">' + rows.filter(r => r[1] != null && r[1] !== "").map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("") + '</dl>';
+const frame = (label, body, id) => body ? `<div class="frame"${id ? ` id="${id}"` : ""}><span class="frame__label">${label}</span><div class="frame__body">${body}</div></div>` : "";
+const pctR = (r, n) => n ? `${Math.round(100 * r / n)}%` : "—";
+const bar = (r, n, grey) => `<span class="bv${grey ? " grey" : ""}"><i style="width:${n ? (100 * r / n).toFixed(1) : 0}%"></i></span>`;
+const famLink = f => famCluster.has(f) ? `<a href="clusters.html?cluster=${clusterId(famCluster.get(f))}">${esc(famName(f))}</a>` : esc(famName(f));
+const famChips = f => { const c = famClass.get(f) || ["", "", 0]; return `<span class="chip coral">${esc(String(c[0]).toLowerCase())}</span>${c[1] && c[1] !== c[0] ? ` <span class="chip">${esc(String(c[1]).toLowerCase())}</span>` : ""}${c[2] ? ' <span class="chip">point</span>' : ""}`; };
+function phenoBar(list, abx){
+  const c = [0, 0, 0]; list.forEach(i => { const t = testOf(i, abx); if(t) c[t[T.ph]]++; }); const n = c[0] + c[1] + c[2];
+  return `<div class="bar3">${n ? `<i class="r" style="width:${100 * c[2] / n}%"></i><i class="i" style="width:${100 * c[1] / n}%"></i><i class="s" style="width:${100 * c[0] / n}%"></i>` : ""}</div>
+    <div class="summary"><span class="coral">${c[2]} resistant</span> · <span class="mustard">${c[1]} intermediate</span> · <span class="green">${c[0]} susceptible</span> · ${n} tested in ${lineages(list.filter(i => testOf(i, abx)))} lineages</div>`;
+}
+function assoc(){
+  const abx = st.abx, fam = st.fam, minN = +$('sMin').value, expOnly = $('tExp').getAttribute('aria-pressed') === 'true';
+  QS.set({antibiotic: abx != null ? abxName(abx) : null, family: fam != null ? famName(fam) : null});
+  $('assocDetail').innerHTML = "";
+  if(abx == null && fam == null){ $('assocSummary').innerHTML = ""; $('assocLabel').textContent = "association"; $('assoc').innerHTML = `<tbody><tr><td class="empty">pick an antibiotic, a gene family, or both</td></tr></tbody>`; return; }
+  if(abx != null && fam == null){
+    const tested = ISO.filter(i => testOf(i, abx));
+    $('assocSummary').innerHTML = frame(`${esc(abxName(abx))}`, phenoBar(tested, abx) + `<div class="detail-note">genes flagged <b>expected</b> act on ${esc(abxName(abx))} by their AMRFinder subclass: ${(AB.targets[abx] || []).map(t => t.toLowerCase()).join(", ") || "no map for this drug"}</div>`);
+    const rows = [];
+    for(const [f] of famCarriers){
+      const carriers = tested.filter(i => famsOf(i).has(f)), others = tested.filter(i => !famsOf(i).has(f));
+      if(carriers.length < minN) continue;
+      const anyGene = carriers[0].genes.find(g => g[G.fam] === f), exp = anyGene ? expected(abx, anyGene) : false;
+      if(expOnly && !exp) continue;
+      const rc = carriers.filter(i => testOf(i, abx)[T.ph] === 2).length, ro = others.filter(i => testOf(i, abx)[T.ph] === 2).length;
+      rows.push({f, exp, nc: carriers.length, lc: lineages(carriers), rc, no: others.length, ro, diff: (carriers.length ? rc / carriers.length : 0) - (others.length ? ro / others.length : 0)});
+    }
+    rows.sort((a, b) => (b.exp - a.exp) || (b.diff - a.diff) || (b.nc - a.nc));
+    $('assocLabel').textContent = `gene families among the ${tested.length} isolates tested for ${abxName(abx)}`;
+    $('assoc').innerHTML = `<thead><tr><th>family</th><th>class</th><th></th><th class="r">carriers</th><th class="bar">resistant among carriers</th><th class="r"></th><th class="bar">resistant among non-carriers</th><th class="r"></th><th class="r">difference</th><th></th></tr></thead><tbody>` +
+      rows.map(r => `<tr tabindex="0" data-f="${r.f}" class="${r.exp ? "exp" : ""}"><td class="k">${famLink(r.f)}</td><td class="wrap" style="max-width:260px;min-width:0">${famChips(r.f)}</td><td>${r.exp ? '<span class="chip coral">expected</span>' : ""}</td>
+        <td class="r">${r.nc} <span class="mute">· ${r.lc} lin.</span></td><td class="bar">${bar(r.rc, r.nc)}</td><td class="r">${r.rc} · ${pctR(r.rc, r.nc)}</td>
+        <td class="bar">${bar(r.ro, r.no, true)}</td><td class="r">${r.ro} of ${r.no} · ${pctR(r.ro, r.no)}</td><td class="r ${r.diff > 0.2 ? "coral" : r.diff < -0.2 ? "green" : ""}">${r.diff >= 0 ? "+" : ""}${Math.round(100 * r.diff)} pts</td>
+        <td>${famCluster.has(r.f) ? `<a href="islands.html?cluster=${clusterId(famCluster.get(r.f))}" class="dim">islands</a>` : ""}</td></tr>`).join("") + `</tbody>`;
+    if(!rows.length) $('assoc').innerHTML += `<tbody><tr><td class="empty">no family with ${minN} or more carriers among the tested isolates</td></tr></tbody>`;
+    $('assoc').querySelector('tbody').onclick = e => { if(e.target.closest('a')) return; const tr = e.target.closest('tr[data-f]'); if(tr) detail(abx, +tr.dataset.f); };
+  } else if(fam != null && abx == null){
+    const carriers = ISO.filter(i => famsOf(i).has(fam)), others = ISO.filter(i => !famsOf(i).has(fam));
+    const c = famClass.get(fam) || ["", ""];
+    $('assocSummary').innerHTML = frame(`${esc(famName(fam))}`, `<div class="summary"><b>${carriers.length}</b> tested isolates carry it, in ${lineages(carriers)} lineages · ${famChips(fam)}${famCluster.has(fam) ? ` · <a href="clusters.html?cluster=${clusterId(famCluster.get(fam))}">cluster record</a> · <a href="islands.html?cluster=${clusterId(famCluster.get(fam))}">islands</a>` : ""}</div>`);
+    const anyGene = carriers[0] && carriers[0].genes.find(g => g[G.fam] === fam);
+    const rows = [];
+    for(const [a] of abxTested){
+      const tc = carriers.filter(i => testOf(i, a)), to = others.filter(i => testOf(i, a));
+      if(tc.length < minN) continue;
+      const exp = anyGene ? expected(a, anyGene) : false; if(expOnly && !exp) continue;
+      const rc = tc.filter(i => testOf(i, a)[T.ph] === 2).length, ro = to.filter(i => testOf(i, a)[T.ph] === 2).length;
+      rows.push({a, exp, nc: tc.length, lc: lineages(tc), rc, no: to.length, ro, diff: (tc.length ? rc / tc.length : 0) - (to.length ? ro / to.length : 0)});
+    }
+    rows.sort((a, b) => (b.exp - a.exp) || (b.diff - a.diff) || (b.nc - a.nc));
+    $('assocLabel').textContent = `antibiotics tested on carriers of ${famName(fam)}`;
+    $('assoc').innerHTML = `<thead><tr><th>antibiotic</th><th></th><th class="r">carriers tested</th><th class="bar">resistant among carriers</th><th class="r"></th><th class="bar">resistant among non-carriers</th><th class="r"></th><th class="r">difference</th></tr></thead><tbody>` +
+      rows.map(r => `<tr tabindex="0" data-a="${r.a}" class="${r.exp ? "exp" : ""}"><td class="k">${esc(abxName(r.a))}</td><td>${r.exp ? '<span class="chip coral">expected</span>' : ""}</td>
+        <td class="r">${r.nc} <span class="mute">· ${r.lc} lin.</span></td><td class="bar">${bar(r.rc, r.nc)}</td><td class="r">${r.rc} · ${pctR(r.rc, r.nc)}</td>
+        <td class="bar">${bar(r.ro, r.no, true)}</td><td class="r">${r.ro} of ${r.no} · ${pctR(r.ro, r.no)}</td><td class="r ${r.diff > 0.2 ? "coral" : r.diff < -0.2 ? "green" : ""}">${r.diff >= 0 ? "+" : ""}${Math.round(100 * r.diff)} pts</td></tr>`).join("") + `</tbody>`;
+    if(!rows.length) $('assoc').innerHTML += `<tbody><tr><td class="empty">no antibiotic tested on ${minN} or more carriers</td></tr></tbody>`;
+    $('assoc').querySelector('tbody').onclick = e => { const tr = e.target.closest('tr[data-a]'); if(tr) detail(+tr.dataset.a, fam); };
+  } else {
+    $('assocSummary').innerHTML = ""; $('assocLabel').textContent = `${famName(fam)} × ${abxName(abx)}`; $('assoc').innerHTML = "";
+    detail(abx, fam);
+  }
+}
+function detail(abx, fam){
+  const carriers = ISO.filter(i => famsOf(i).has(fam) && testOf(i, abx)), others = ISO.filter(i => !famsOf(i).has(fam) && testOf(i, abx));
+  const row = i => { const t = testOf(i, abx); const exp = i.genes.filter(g => expected(abx, g)).map(g => symName(g[G.sym]));
+    return `<tr tabindex="0" data-t="${esc(i.t)}"><td class="k">${esc(i.t)}</td><td><i>${esc(DD.species[i.sp])}</i></td><td>${i.pds >= 0 ? esc(DD.pds[i.pds]) : '<span class="dim">—</span>'}</td>
+      <td><span class="res ${PH[t[T.ph]]}">${PH[t[T.ph]]}</span></td><td>${esc(measure(t))}</td><td class="mute">${esc(DD.method[t[T.method]] || "")}</td><td class="wrap">${exp.map(s => `<span class="chip ${s.startsWith(famName(fam)) ? "coral" : ""}">${esc(s)}</span>`).join(" ") || '<span class="dim">none expected</span>'}</td></tr>`; };
+  const table = list => `<div class="tablewrap" style="max-height:420px"><table class="data-table"><thead><tr><th>isolate</th><th>species</th><th>lineage</th><th>result</th><th>measured</th><th>method</th><th>genes acting on ${esc(abxName(abx))}</th></tr></thead><tbody>${list.map(row).join("")}</tbody></table></div>`;
+  $('assocDetail').innerHTML = frame(`carriers of ${esc(famName(fam))} tested for ${esc(abxName(abx))} <span class="n">${carriers.length}</span>`, phenoBar(carriers, abx) + table(carriers)) +
+    frame(`non-carriers tested for ${esc(abxName(abx))} <span class="n">${others.length}</span>`, phenoBar(others, abx) + table(others));
+  $('assocDetail').querySelectorAll('tbody').forEach(tb => tb.onclick = e => { const tr = e.target.closest('tr[data-t]'); if(tr){ goTab("isolates"); select(tr.dataset.t); } });
+  $('assocDetail').scrollIntoView({block: "start", behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? "auto" : "smooth"});
+}
+$('sAbx').onchange = () => { st.abx = $('sAbx').value === "" ? null : +$('sAbx').value; assoc(); };
+$('sFam').onchange = () => { st.fam = $('sFam').value === "" ? null : +$('sFam').value; assoc(); };
+$('sMin').onchange = assoc;
+$('tExp').onclick = () => { const b = $('tExp'); b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); assoc(); };
+$('tClear').onclick = () => { st.abx = null; st.fam = null; $('sAbx').value = ""; $('sFam').value = ""; assoc(); };
+
+/* ============================ isolates ============================ */
+const ISO_BY = new Map(ISO.map(i => [i.t, i]));
+const countR = i => i.tests.filter(t => t[T.ph] === 2).length;
+function listed(){
+  const q = $('q').value.trim().toLowerCase(), wantIsl = $('fIsl').getAttribute('aria-pressed') === 'true', by = $('fSort').value;
+  let out = ISO.filter(i => { if(wantIsl && !(i.islands.length + i.islands3.length)) return false;
+    if(q && !(i.t + " " + i.bs + " " + i.asm + " " + DD.species[i.sp] + " " + (i.pds >= 0 ? DD.pds[i.pds] : "") + " " + i.genes.map(g => symName(g[G.sym]) + " " + famName(g[G.fam])).join(" ")).toLowerCase().includes(q)) return false; return true; });
+  const k = {id: i => i.t, r: i => -countR(i), n: i => -i.tests.length, genes: i => -i.genes.length}[by];
+  out.sort((a, b) => { const x = k(a), y = k(b); return x < y ? -1 : x > y ? 1 : a.t.localeCompare(b.t); });
+  return out;
+}
+function rail(){
+  const L = listed(); $('niso').textContent = `${L.length} of ${ISO.length}`;
+  $('rail').innerHTML = L.length ? L.map(i => `<button class="irow" data-t="${esc(i.t)}"${i.t === st.iso ? ' aria-current="true"' : ''}>
+      <span><span class="id">${esc(i.t)}</span><span class="m"><i>${esc(DD.species[i.sp])}</i></span></span>
+      <span class="chips"><span class="chip coral">${countR(i)} R</span><span class="chip">${i.tests.length}</span>${i.islands.length ? `<span class="chip mustard">${i.islands.length} isl</span>` : ""}${i.islands3.length ? `<span class="chip">${i.islands3.length} t3</span>` : ""}${i.genome ? "" : '<span class="chip">no genome</span>'}</span></button>`).join("") : `<div class="empty">no isolate matches</div>`;
+}
+$('rail').onclick = e => { const b = e.target.closest('.irow'); if(b) select(b.dataset.t); };
+$('q').oninput = debounce(rail, 150); $('fSort').onchange = rail;
+$('fIsl').onclick = () => { const b = $('fIsl'); b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); rail(); };
+function select(t){
+  const i = ISO_BY.get(t); if(!i) return;
+  st.iso = t; QS.set({isolate: t});
+  document.querySelectorAll('#rail .irow').forEach(b => b.setAttribute('aria-current', String(b.dataset.t === t)));
+  const cur = document.querySelector('#rail .irow[aria-current="true"]'); if(cur) cur.scrollIntoView({block: "nearest"});
+  const c = [0, 0, 0]; i.tests.forEach(x => c[x[T.ph]]++);
+  $('nab').textContent = `${i.tests.length} tests`;
+  $('abTable').innerHTML = `<thead><tr><th>antibiotic</th><th>result</th><th>measured</th><th>method</th><th>standard</th><th>genes acting on it</th></tr></thead><tbody>` +
+    [...i.tests].sort((a, b) => b[T.ph] - a[T.ph] || abxName(a[T.abx]).localeCompare(abxName(b[T.abx]))).map(x => { const exp = i.genes.filter(g => expected(x[T.abx], g));
+      return `<tr><td class="k">${esc(abxName(x[T.abx]))}</td><td><span class="res ${PH[x[T.ph]]}">${PH[x[T.ph]]}</span> <span class="mute">${PHNAME[x[T.ph]]}</span></td><td>${esc(measure(x))}</td><td class="mute">${esc(DD.method[x[T.method]] || "")}</td><td class="mute">${esc(DD.standard[x[T.std]] || "")}</td>
+        <td class="wrap">${exp.map(g => `<span class="chip coral">${esc(symName(g[G.sym]))}</span>`).join(" ") || (AB.targets[x[T.abx]] && AB.targets[x[T.abx]].length ? '<span class="dim">none</span>' : '<span class="dim">no map</span>')}</td></tr>`; }).join("") + `</tbody>`;
+  drawIslands(i);
+  const byClass = new Map(); i.genes.forEach(g => { const k = DD.class[g[G.cls]]; let a = byClass.get(k); if(!a){ a = []; byClass.set(k, a); } a.push(g); });
+  /* which genotype rows sit in a drawn island: by cluster, and by family name for the rows whose family maps to another cluster of the same family */
+  const inIsl = new Map(), famIn = new Map();
+  i.islands.concat(i.islands3).forEach(n => { const o = island(n); if(o) o.genes.forEach(g => { if(g.cluster >= 0 && !inIsl.has(g.cluster)) inIsl.set(g.cluster, n);
+    if(/^amr_anchor/.test(g.role) && g.label){ const f = g.label.replace(/-\d+.*$/, "").replace(/_.*$/, ""); if(!famIn.has(f)) famIn.set(f, [n, g.cluster]); } }); });
+  const where = g => { if(g[G.cluster] >= 0 && inIsl.has(g[G.cluster])) return [inIsl.get(g[G.cluster]), g[G.cluster]]; const f = famName(g[G.fam]); return famIn.get(f) || famIn.get(symName(g[G.sym]).replace(/-\d+.*$/, "")) || null; };
+  let nIn = 0;
+  $('ngenes').textContent = `${i.genes.length} genes`;
+  $('genotype').innerHTML = i.genes.length ? [...byClass.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([k, gs]) => `<div class="geneclass"><span class="lbl">${esc(k.toLowerCase())}</span><div class="genechips">` +
+      gs.map(g => { const r = i.tests.filter(x => expected(x[T.abx], g)), rr = r.filter(x => x[T.ph] === 2).length;
+        const w = where(g); if(w) nIn++;
+        const title = `${symName(g[G.sym])} · ${DD.subclass[g[G.sub]]}${r.length ? ` · resistant to ${rr} of ${r.length} drugs it acts on` : ""}${g[G.partial] ? " · partial or variant call" : ""}` +
+          (w ? ` · drawn in ${islandId(w[0])}${i.islands3.includes(w[0]) ? " (tier-3 backbone window)" : ""}` : " · in no window: the gene lies on a contig too short for one, or its hit was not a complete gene");
+        const cls = `${r.length && rr === r.length ? "exp" : ""}${g[G.point] ? " pt" : ""}${w ? " inisl" : ""}`, dc = w ? ` data-c="${w[1]}" data-n="${w[0]}"` : "";
+        return g[G.cluster] >= 0 ? `<a href="clusters.html?cluster=${clusterId(g[G.cluster])}" class="${cls}"${dc} title="${esc(title)}">${esc(symName(g[G.sym]))}</a>` : `<span class="noc${cls}"${dc} title="${esc(title)}">${esc(symName(g[G.sym]))}</span>`; }).join("") + `</div></div>`).join("") +
+    `<div class="detail-note"><span class="dot" style="background:var(--c-green);vertical-align:middle"></span> drawn below (${nIn} of ${i.genes.length}), in a resistance island or a tier-3 backbone window; the rest sit on a contig too short for a window · coral outline: resistant to every tested drug the gene acts on · dashed: point mutation · grey: no analysed cluster for the family</div>` : `<div class="mute">no resistance gene called for this isolate</div>`;
+  $('genotype').querySelectorAll('[data-c]').forEach(el => { el.onmouseenter = () => { const c = el.dataset.c; document.querySelectorAll('#mapwrap .gene').forEach(pg => pg.classList.toggle('hl', pg.dataset.c === c)); el.classList.add('hl'); };
+    el.onmouseleave = () => { document.querySelectorAll('#mapwrap .gene.hl').forEach(pg => pg.classList.remove('hl')); el.classList.remove('hl'); }; });
+  $('panel').innerHTML = kv([["isolate", `<b>${esc(i.t)}</b>`], ["biosample", esc(i.bs)], ["assembly", i.asm ? esc(i.asm) : '<span class="mute">none</span>'], ["genome", i.genome ? "in the dataset" : '<span class="mute">not downloaded</span>'],
+    ["species", `<i>${esc(DD.species[i.sp])}</i>`], ["SNP lineage", i.pds >= 0 ? esc(DD.pds[i.pds]) : '<span class="mute">none</span>'],
+    ["tests", `${i.tests.length} <span class="mute">· <span class="coral">${c[2]} R</span> · <span class="mustard">${c[1]} I</span> · <span class="green">${c[0]} S</span></span>`],
+    ["methods", esc([...new Set(i.tests.map(x => DD.method[x[T.method]]))].filter(Boolean).join(", "))], ["standards", esc([...new Set(i.tests.map(x => DD.standard[x[T.std]]))].filter(Boolean).join(", "))],
+    ["islands", i.islands.length ? `<div class="row" style="gap:5px">${i.islands.map(n => `<a href="islands.html?island=${islandId(n)}">${islandId(n)}</a>`).join("")}</div>` : '<span class="mute">none in tier 1 or 2</span>'],
+    ["tier-3 windows", i.islands3.length ? `<div class="row" style="gap:5px">${i.islands3.map(n => `<a href="islands.html?island=${islandId(n)}&tier=2" class="dim">${islandId(n)}</a>`).join("")}</div>` : '<span class="mute">none</span>']]);
+}
+$('copyId').onclick = () => { if(st.iso) copyText(st.iso, $('copyId')); };
+
+/* ============================ the isolate's islands, drawn ============================ */
+/* The gene maps here are a slice of the islands page's payload, re-indexed by step 37. Each island
+   of the isolate is one row, left-aligned at its own start and on one scale, so lengths compare;
+   the roles and colours are the islands page's. Clicking a row or an arrow opens it there. */
+const GM = AB.gm || {g: {}};
+const ROLES = GM.roles || [], FL = GM.flag_label, FP = GM.flag_pseudo, BP = GM.bp || 10;
+const _isl = new Map();
+function island(n){
+  let o = _isl.get(n); if(o) return o;
+  const raw = GM.g[n]; if(!raw) return null;
+  const v = varints(raw); let prev = v[0], i = 1; const genes = [];
+  while(i < v.length){
+    const gap = unzig(v[i++]), w = v[i++], cs = v[i++], fl = v[i++]; let li = -1; if(fl & FL) li = v[i++] - 1;
+    const start = (prev + gap) * BP, ci = (cs >> 1) - 1, role = ROLES[fl & 15] || "other";
+    genes.push({s: start, e: start + w * BP, strand: (cs & 1) ? 1 : -1, cluster: ci >= 0 ? GM.cluster[ci] : -1, role, pseudo: !!(fl & FP),
+      label: li >= 0 ? GM.dicts.label[li] : (ci >= 0 ? GM.clabel[ci] : ""), cls: ci >= 0 && GM.cclass[ci] >= 0 ? GM.dicts.amrclass[GM.cclass[ci]] : ""});
+    prev = prev + gap + w; }
+  o = {n, genes, lo: genes[0].s, hi: genes[genes.length - 1].e}; _isl.set(n, o); return o;
+}
+const styleOf = g => ROLE_STYLE[g.role === "mge" && g.pseudo ? "mge_pseudo" : g.role] || ROLE_STYLE.other;
+function arrowPts(x0, x1, strand, yB, half, cap){ const w = Math.max(x1 - x0, 1.5), head = Math.min(0.55 * w, cap);
+  return strand === -1 ? [[x1, yB - half], [x0 + head, yB - half], [x0, yB], [x0 + head, yB + half], [x1, yB + half]] : [[x0, yB - half], [x1 - head, yB - half], [x1, yB], [x1 - head, yB + half], [x0, yB + half]]; }
+function drawIslands(iso){
+  const t3 = new Set(iso.islands3), rows = iso.islands.concat(iso.islands3).map(island).filter(Boolean);
+  $('nisl').textContent = rows.length ? `${iso.islands.length} islands${iso.islands3.length ? ` + ${iso.islands3.length} tier-3 windows` : ""}` : "";
+  if(!rows.length){ $('mapwrap').innerHTML = `<div class="empty">no island or backbone window for this isolate</div>`; $('fitnote').textContent = ""; $('legend').innerHTML = ""; return; }
+  const avail = Math.max(650, ($('mapwrap').clientWidth || 1000) - 2), GUT = 150, MR = 20, RH = 44, HALF = 12, top = 12;
+  const span = Math.max(...rows.map(r => r.hi - r.lo)) * 1.02, W = avail, plotW = W - GUT - MR, H = top + rows.length * RH + 60, yAxis = top + rows.length * RH + 14;
+  const xs = bp => GUT + bp / span * plotW, cap = Math.max(4, 0.012 * plotW), p = [];
+  rows.forEach((r, k) => { const yB = top + k * RH + RH / 2 - 6; let lastEnd = -1e9;
+    p.push(`<text class="srow" x="4" y="${yB + 4}" data-n="${r.n}">${islandId(r.n)}${t3.has(r.n) ? ' <tspan class="gaxlab">t3</tspan>' : ""}</text>`);
+    r.genes.forEach((g, i) => { const x0 = xs(g.s - r.lo), x1 = xs(g.e - r.lo), sty = styleOf(g), cx = 0.5 * (x0 + x1);
+      p.push(`<polygon class="gene" data-n="${r.n}" data-i="${i}" data-c="${g.cluster}" points="${arrowPts(x0, x1, g.strand, yB, HALF, cap).map(q => q[0].toFixed(1) + "," + q[1].toFixed(1)).join(" ")}" fill="${sty.fill}" stroke="${sty.stroke}" stroke-width="${sty.sw}"${sty.dash ? ' stroke-dasharray="3 2"' : ''}/>`);
+      if(sty.dot) p.push(`<circle cx="${cx.toFixed(1)}" cy="${yB}" r="2.8" fill="${sty.stroke}"/>`);
+      if(ANALYSED_ROLES.has(g.role) && g.label && !/^hypothetical/i.test(g.label)){ const lab = g.label.length > 14 ? g.label.slice(0, 13) + "…" : g.label, w = lab.length * 6.6;
+        if(cx - w / 2 > lastEnd + 6){ lastEnd = cx + w / 2; p.push(`<text class="glab hi" x="${cx.toFixed(1)}" y="${yB + HALF + 12}" text-anchor="middle">${esc(lab)}</text>`); } } }); });
+  p.push(`<line class="gaxis" x1="${GUT}" y1="${yAxis}" x2="${W - MR}" y2="${yAxis}"/>`);
+  const step = [1000, 2000, 5000, 10000, 20000].find(v => span / v <= 9) || 50000;
+  for(let bp = 0; bp <= span; bp += step){ const x = xs(bp).toFixed(1); p.push(`<line class="gtick" x1="${x}" y1="${yAxis}" x2="${x}" y2="${yAxis + 5}"/><text class="gaxlab" x="${x}" y="${yAxis + 18}" text-anchor="middle">${bp / 1000} kb</text>`); }
+  p.push(`<text class="gcap" x="${GUT}" y="${H - 4}">distance from each island's start · one scale for all rows</text>`);
+  $('mapwrap').innerHTML = `<svg class="gmap" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="the islands of isolate ${esc(iso.t)}">${p.join("")}</svg>`;
+  $('fitnote').textContent = `${rows.length} row${rows.length === 1 ? "" : "s"}${t3.size ? ", t3 marks a tier-3 backbone window around a core gene" : ""} · resistance genes labelled · click a row or an arrow to open it on the islands page`;
+  $('legend').innerHTML = legendHTML();
+  const svg = $('mapwrap').querySelector('svg'), tip = $('tip');
+  svg.addEventListener('mousemove', e => { const el = e.target.closest('.gene'); if(!el){ hideTip(tip); return; }
+    const g = island(+el.dataset.n).genes[+el.dataset.i], sty = styleOf(g);
+    showTip(tip, e, `<div class="h">${esc(g.label || "unlabelled")}${g.pseudo ? ' <span class="chip mustard">pseudogene</span>' : ''}</div><table><tr><td>role</td><td>${esc(sty.label)}</td></tr>
+      <tr><td>cluster</td><td>${g.cluster >= 0 ? clusterId(g.cluster) : "none"}</td></tr>${g.cls ? `<tr><td>amr class</td><td>${esc(g.cls.toLowerCase())}</td></tr>` : ""}
+      <tr><td>location</td><td>${fmt(g.s)}–${fmt(g.e)} (${g.strand === 1 ? "+" : "−"})</td></tr></table>`); });
+  svg.addEventListener('mouseleave', () => hideTip(tip));
+  svg.addEventListener('click', e => { const el = e.target.closest('.gene, .srow'); if(el) location.href = `islands.html?island=${islandId(+el.dataset.n)}${t3.has(+el.dataset.n) ? "&tier=2" : ""}`; });
+}
+addEventListener('resize', debounce(() => { if(st.iso) drawIslands(ISO_BY.get(st.iso)); }, 200));
+
+/* ============================ coverage ============================ */
+let covDone = false;
+function coverage(){
+  if(covDone) return; covDone = true;
+  const fr = (label, body, note) => `<div class="frame"><span class="frame__label">${label}</span><div class="frame__body">${body}${note ? `<div class="note" style="padding:8px 0 0">${note}</div>` : ""}</div></div>`;
+  const perAbx = [...abxTested.entries()].sort((a, b) => b[1] - a[1]).map(([a, n]) => { const r = ISO.filter(i => { const t = testOf(i, a); return t && t[T.ph] === 2; }).length; return [`${abxName(a)} · ${Math.round(100 * r / n)}% R`, n, "coral"]; });
+  const sp = new Map(); ISO.forEach(i => sp.set(i.sp, (sp.get(i.sp) || 0) + 1));
+  const ph = [0, 0, 0]; ISO.forEach(i => i.tests.forEach(t => ph[t[T.ph]]++));
+  const me = new Map(), sd = new Map(); ISO.forEach(i => i.tests.forEach(t => { me.set(DD.method[t[T.method]], (me.get(DD.method[t[T.method]]) || 0) + 1); sd.set(DD.standard[t[T.std]], (sd.get(DD.standard[t[T.std]]) || 0) + 1); }));
+  const famTop = [...famCarriers.entries()].sort((a, b) => b[1] - a[1]).slice(0, 25).map(([f, n]) => [famName(f), n, "coral"]);
+  $('cov').innerHTML =
+    fr("how much of the group was tested", `<div class="summary"><b>${fmt(ISO.length)}</b> isolates with an antibiogram out of <b>${fmt(AB.group_isolates)}</b> in the group (${(100 * ISO.length / AB.group_isolates).toFixed(1)}%), <b>${fmt(nTests)}</b> defined tests, <b>${ISO.filter(i => i.islands.length).length}</b> tested isolates carry a tier-1 or tier-2 island.</div>` +
+      barsHTML([["resistant", ph[2], "coral"], ["intermediate", ph[1], "mustard"], ["susceptible", ph[0], "green"]]), "calls of 'not defined' are dropped; each isolate is counted once per antibiotic") +
+    fr("tests per antibiotic", barsHTML(perAbx.slice(0, 30)), perAbx.length > 30 ? `${perAbx.length - 30} more antibiotics with fewer tests` : "") +
+    fr("tested isolates by species", barsHTML([...sp.entries()].sort((a, b) => b[1] - a[1]).map(([s, n]) => [DD.species[s], n]))) +
+    fr("methods and standards", barsHTML([...me.entries()].map(([k, n]) => [k || "unknown", n]).concat([...sd.entries()].map(([k, n]) => [`standard ${k || "unknown"}`, n])))) +
+    fr("most common resistance genes among the tested", barsHTML(famTop), "families carried by the tested isolates; click a family in the first tab for its phenotypes");
+}
+
+/* ============================ how to read ============================ */
+$('howto').innerHTML = `
+<h3>what is here</h3>
+<p>NCBI Pathogen Detection stores an <b>antibiogram</b> for a small share of isolates: the laboratory's susceptible, intermediate or resistant call per antibiotic, usually with the measured MIC or disk-diffusion value, the method and the breakpoint standard. Step 9 searched every BioSample of the group and kept what it found: <b>${fmt(ISO.length)}</b> isolates of <b>${fmt(AB.group_isolates)}</b>. Beside each antibiogram sits the same isolate's resistance <b>genotype</b> from AMRFinderPlus, so the annotation used everywhere else in these pages can be checked against a phenotype.</p>
+<h3>genotype × phenotype</h3>
+<p>Pick an antibiotic: every gene family carried by at least the chosen minimum of tested isolates is listed with the resistance rate among its <b>carriers</b> and among the <b>non-carriers</b> tested for the same drug, and the difference in percentage points. Pick a family instead to see the same across antibiotics. Pick both to list the isolates themselves. A row is flagged <b>expected</b> when the family's AMRFinder subclass acts on that antibiotic, by a hand-written map (step 37) that is broad for beta-lactams and narrow elsewhere; an unexpected association is worth a look, not a conclusion.</p>
+<p>Three cautions. A phenotype belongs to the isolate, not to one gene: an isolate carrying blaKPC and blaNDM is resistant because of both, and the table cannot apportion it. Counts are per isolate, with the number of <b>SNP lineages</b> beside them, because one outbreak clone tested many times inflates a rate. And ${fmt(ISO.length)} isolates is a small sample: a difference over five carriers is a hint.</p>
+<h3>isolates</h3>
+<p>One isolate at a time: its calls sorted resistant first, with the measured value, and for each drug the genes it carries that act on it. Its tier-1 and tier-2 islands are drawn beneath, one row each on one scale, with the islands page's colours; click one to open it there. A green dot on a gene means it sits in one of those islands, and hovering it picks the arrow out. Tier-3 backbone windows around core genes such as <code>blaCMY</code> or <code>gyrA</code> are drawn too, marked t3. A gene without the dot lies on a contig too short for a window. The genotype is grouped by class; a gene in <span class="coral">coral</span> was resistant to every tested drug it acts on, a dashed outline is a point mutation, and a name links into the <a href="clusters.html">clusters</a> page where the family has an analysed cluster. Islands link into the <a href="islands.html">islands</a> page.</p>
+<h3>links</h3>
+<p><code>antibiograms.html?antibiotic=meropenem</code>, <code>?family=blaKPC</code>, both together, or <code>?isolate=PDT000050772.2</code> open the page on that question.</p>`;
+
+/* ============================ boot ============================ */
+const goTab = wireTabs(name => { if(name === "coverage") coverage(); });
+if(AB.absent || !ISO.length){
+  $('assoc').innerHTML = `<tbody><tr><td class="empty">no antibiogram was found for this group; run scripts/09_fetch_antibiograms.py and rebuild</td></tr></tbody>`;
+  $('rail').innerHTML = `<div class="empty">no tested isolate</div>`;
+} else {
+  { const a = QS.get("antibiotic"), f = QS.get("family"); const ai = (DD.antibiotic || []).indexOf(a), fi = (DD.family || []).indexOf(f);
+    if(ai >= 0){ st.abx = ai; $('sAbx').value = ai; } if(fi >= 0){ st.fam = fi; $('sFam').value = fi; }
+    if(st.abx == null && st.fam == null){ const def = (DD.antibiotic || []).indexOf("meropenem"); st.abx = def >= 0 ? def : (+$('sAbx').options[1]?.value ?? null); if(st.abx != null) $('sAbx').value = st.abx; } }
+  assoc();
+  rail();
+  { const t = QS.get("isolate"); select(ISO_BY.has(t) ? t : listed()[0].t); }
+}
+</script>
+</body>
+</html>

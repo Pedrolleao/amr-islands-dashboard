@@ -1,0 +1,33 @@
+# ---- Per-organism-group data: raw NCBI downloads and pipeline outputs (tens of GB).
+# Rebuilt by scripts/run_all.py, run_islands.py and run_dashboard.py.
+# Only each group's README and its built, self-contained Dashboard pages are tracked.
+Citrobacter_freundii/*
+!Citrobacter_freundii/README.md
+!Citrobacter_freundii/Dashboard/
+Citrobacter_portucalensis/*
+!Citrobacter_portucalensis/README.md
+!Citrobacter_portucalensis/Dashboard/
+Clostridioides_difficile/*
+!Clostridioides_difficile/README.md
+!Clostridioides_difficile/Dashboard/
+Clostridium_botulinum/*
+!Clostridium_botulinum/README.md
+!Clostridium_botulinum/Dashboard/
+Clostridium_perfringens/*
+!Clostridium_perfringens/README.md
+!Clostridium_perfringens/Dashboard/
+
+# ---- NCBI datasets CLI binaries (download from
+# https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/v2/linux-amd64/) and local venv
+tools/datasets
+tools/dataformat
+tools/viz_env/
+
+# ---- Python / editor artefacts
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

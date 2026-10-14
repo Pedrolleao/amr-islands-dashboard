@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clusters · <!--GROUP_NAME--></title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<!--CORE:css-->
+<style>
+.filterbar{display:flex;flex-wrap:wrap;gap:12.5px 20px;align-items:flex-end}
+.filterbar .field{margin:0;min-width:200px}
+.filterbar .field--grow{flex:1;min-width:275px}
+.masonry{columns:4 375px;column-gap:17.5px}
+.masonry .frame{break-inside:avoid;margin-bottom:17.5px}
+.head{display:grid;grid-template-columns:1fr auto;gap:17.5px;align-items:start}
+.head__name{font-size:25px;font-weight:500;line-height:1.2}
+.head__name .light{color:var(--fg-mute);font-weight:300}
+.head__sub{color:var(--fg-mute);font-size:14px;margin-top:5px}
+.head__actions{display:flex;gap:7.5px;flex-wrap:wrap;justify-content:flex-end}
+.track{display:block;width:100%;height:57.5px;border:1px solid var(--border);background:var(--bg-2)}
+.tracklab{display:flex;justify-content:space-between;font-size:11px;color:var(--fg-dim);text-transform:uppercase;letter-spacing:.12em;margin:2.5px 0 10px}
+.readout{font-size:12.5px;color:var(--fg-mute);min-height:20px;margin-bottom:7.5px}
+.domstrip{display:block;width:100%;height:42.5px;border:1px solid var(--border);background:var(--bg-2);margin-bottom:10px}
+.domlist{font-size:14px} .domlist div{display:flex;gap:10px;padding:2.5px 0;border-bottom:1px dashed var(--border);color:var(--fg-mute)} .domlist b{color:var(--fg);min-width:137.5px}
+.domlist span.pos{margin-left:auto;color:var(--fg-dim);white-space:nowrap}
+.hits td.wrap{white-space:normal;min-width:200px}
+.isl-list{display:flex;flex-wrap:wrap;gap:5px} .isl-list a{font-size:12.5px;border:1px solid var(--border);padding:1px 6px;border-bottom:1px solid var(--border)} .isl-list a:hover{border-color:var(--c-teal)}
+.tierline{font-size:14px;color:var(--fg-mute);margin-top:10px;line-height:1.55}
+.stagegrid{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:17.5px;align-items:start}
+.subhead{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--fg);margin:20px 0 8px;padding-top:12px;border-top:1px solid var(--border)}
+@media (max-width:1100px){.stagegrid{grid-template-columns:1fr}}
+.stage{display:block;width:100%;height:560px;background:var(--bg-2);border:1px solid var(--border);cursor:grab;touch-action:none}
+.stage.drag{cursor:grabbing}
+.stagewrap{position:relative}
+.ovl{position:absolute;left:12px;top:12px;font-size:12.5px;color:var(--fg-mute);pointer-events:none;line-height:1.6}
+.ovl b{color:var(--fg)}
+.ctl{display:flex;gap:7.5px;flex-wrap:wrap;align-items:center;margin-bottom:12.5px}
+.ctl .sp{flex:1}
+.ribbon{display:block;width:100%;height:120px;border:1px solid var(--border);background:var(--bg-2);margin-top:12.5px}
+.riblab{display:grid;grid-template-columns:1fr 1fr;font-size:11px;color:var(--fg-dim);text-transform:uppercase;letter-spacing:.12em;margin:2.5px 0 10px}
+.riblab span:last-child{text-align:right}
+.stagetip{position:absolute;display:none;background:var(--bg);border:1px solid var(--border-strong);padding:6px 10px;font-size:12.5px;pointer-events:none;color:var(--fg-mute);z-index:5}
+.stagetip b{color:var(--fg)}
+.modseg{display:flex;height:17.5px;border:1px solid var(--border-strong);margin:10px 0 5px}
+.modseg span{border-right:1px solid var(--border-strong);background:var(--highlight);font-size:11px;text-align:center;line-height:15px;color:var(--fg-mute);overflow:hidden}
+.modseg span:last-child{border-right:none}
+#detail:empty{display:none}
+@media (max-width:1100px){.head{grid-template-columns:1fr}.head__actions{justify-content:flex-start}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar__id">
+    <div class="id__head">gene clusters · <!--GROUP_NAME--></div>
+    <div class="id__name">Clusters <span class="light">/ one record per gene family</span></div>
+    <div class="id__sub">The analysed resistance, stress and virulence clusters in full; every other cluster of the pangenome searchable by product and domain architecture.</div>
+  </div>
+  <div class="topbar__meta">
+    <nav class="nav" aria-label="pages"><a href="islands.html">islands</a><a href="clusters.html" aria-current="page">clusters</a><a href="antibiograms.html">antibiograms</a></nav>
+    <div>
+      <div class="meta__row"><span>analysed clusters</span><span id="mAn"></span></div>
+      <div class="meta__row"><span>with variation profile</span><span id="mVar"></span></div>
+      <div class="meta__row"><span>predicted structures</span><span id="mSt"></span></div>
+      <div class="meta__row"><span>clusters in the pangenome</span><span id="mAll"></span></div>
+      <div class="meta__row"><span>built</span><span id="mBuilt"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="frame"><span class="frame__label">filter</span><div class="frame__body">
+  <div class="filterbar">
+    <div class="field"><span class="lbl">set</span><div class="seg" id="fSet"><button data-v="">all</button><button data-v="0">amr<span class="n" id="nAmr"></span></button><button data-v="1">stress<span class="n" id="nStr"></span></button><button data-v="2">virulence<span class="n" id="nVir"></span></button></div></div>
+    <div class="field field--grow"><label class="lbl" for="q">search · id, gene, product, Pfam architecture — over the whole pangenome</label><input class="inp" id="q" placeholder="blaCMY · beta-lactamase · transposase · CFR-014064" autocomplete="off"></div>
+    <div class="field"><label class="lbl" for="fAmr">amr class</label><select class="inp" id="fAmr"></select></div>
+    <div class="field"><label class="lbl" for="fSub">subclass</label><select class="inp" id="fSub"></select></div>
+    <div class="field"><label class="lbl" for="fClass">pangenome class</label><select class="inp" id="fClass"></select></div>
+    <div class="field"><label class="lbl" for="fTier">anchor tier</label><select class="inp" id="fTier"></select></div>
+    <div class="field row"><button class="btn btn--ghost" id="fVar" aria-pressed="false">with variation</button><button class="btn btn--ghost" id="fFold" aria-pressed="false">with fold match</button></div>
+  </div>
+</div></div>
+
+<div class="frame"><span class="frame__label">clusters <span class="n" id="ncl"></span></span><div class="frame__body frame__body--list"><div class="tablewrap" style="border:none;max-height:550px"><table class="data-table" id="tbl"></table></div></div></div>
+
+<div id="detail"></div>
+
+<div class="foot"><span id="footL"></span><span>islands · clusters · antibiograms — three self-contained pages, no server</span></div>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<!--DATA:__CL:clusters.json-->
+<!--DATA:__CI:cluster_index.json-->
+<!--DATA:__ST:structures.json-->
+<!--CORE:js-->
+<script>
+/* ============================ data ============================ */
+const CL = window.__CL, CI = window.__CI, STp = window.__ST;
+const CHAINS = STp.chains, RECS = STp.recs, SD = STp.dicts;
+const F = fieldIndex(CL.fields), CD = CL.dicts, D = (k, v) => dict(CD, k, v);
+const ANALYSED = Object.keys(CL.recs).map(Number).sort((a, b) => a - b);
+const R = n => CL.recs[n];
+const st = {set: "", cur: null, sort: "islands", dir: -1};
+delete window.__CL; delete window.__CI; delete window.__ST;
+
+/* the pangenome-wide index: position i describes cluster i+1 */
+const idx = n => ({members: CI.nm[n - 1], prevalence: CI.pv[n - 1], product: CI.dicts.product[CI.pi[n - 1]] ?? "", arch: CI.dicts.arch[CI.ai[n - 1]] ?? "", cls: CI.dicts.class[CI.ci[n - 1]] ?? "", set: CI.st[n - 1]});
+const inRange = n => n >= 1 && n <= CI.n;
+
+/* ============================ header ============================ */
+$('mAn').textContent = fmt(ANALYSED.length); $('mVar').textContent = fmt(Object.keys(CL.var).length);
+$('mAll').textContent = fmt(CI.n); $('mBuilt').textContent = CL.built; $('mSt').textContent = `${fmt(CHAINS.length)} chains`;
+$('footL').textContent = `${META.group.replace(/_/g, " ")} · payloads built ${CL.built}`;
+{ const c = [0, 0, 0]; ANALYSED.forEach(n => c[R(n)[F.set]]++); $('nAmr').textContent = c[0]; $('nStr').textContent = c[1]; $('nVir').textContent = c[2]; }
+opts($('fClass'), (CD.class || []).map((c, i) => [i, c]), "all classes");
+/* a cluster's classes and subclasses are ";"-joined lists; the selects offer each member once */
+const splitList = s => s ? s.split(";").filter(Boolean) : [];
+const amrOf = n => splitList(D("amrclass", R(n)[F.amr_classes]));
+const subOf = n => splitList(D("amrsubclass", R(n)[F.amr_subclasses]));
+function tokenOptions(sel, fn, all){ const m = new Map(); ANALYSED.forEach(n => fn(n).forEach(t => m.set(t, (m.get(t) || 0) + 1)));
+  opts(sel, [...m.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([t, c]) => [t, `${t.toLowerCase()} · ${c}`]), all); }
+tokenOptions($('fAmr'), amrOf, "all amr classes"); tokenOptions($('fSub'), subOf, "all subclasses");
+opts($('fTier'), (CD.tier || []).map((c, i) => [i, c.replace(/_/g, " ").toLowerCase()]), "all tiers");
+
+/* ============================ search over the whole pangenome ============================ */
+function search(q){
+  q = q.trim().toLowerCase();
+  if(!q) return null;
+  const m = new RegExp("^(?:" + META.prefix.toLowerCase() + "-?)?0*(\\d{1,6})$").exec(q);
+  if(m){ const n = +m[1]; return inRange(n) ? {direct: n, deep: ANALYSED.filter(x => x === n), index: R(n) ? [] : [n]} : {deep: [], index: []}; }
+  const deep = ANALYSED.filter(n => { const r = R(n);
+    return (D("gene", r[F.gene]) + " " + D("product", r[F.product]) + " " + D("arch", r[F.architecture]) + " " + D("catalog", r[F.catalog_symbol]) + " " + D("amrclass", r[F.amr_classes]) + " " + D("amrsubclass", r[F.amr_subclasses]) + " " + clusterId(n)).toLowerCase().includes(q); });
+  const pset = new Set(), aset = new Set();
+  CI.dicts.product.forEach((s, i) => { if(s.toLowerCase().includes(q)) pset.add(i); });
+  CI.dicts.arch.forEach((s, i) => { if(s.toLowerCase().includes(q)) aset.add(i); });
+  const index = [];
+  if(pset.size || aset.size){
+    const pi = CI.pi, ai = CI.ai, stt = CI.st;
+    for(let i = 0; i < CI.n && index.length < 2000; i++) if(stt[i] < 0 && (pset.has(pi[i]) || aset.has(ai[i]))) index.push(i + 1);
+    index.sort((a, b) => CI.nm[b - 1] - CI.nm[a - 1]);
+  }
+  return {deep, index};
+}
+
+/* ============================ table ============================ */
+const COLS = [
+  ["id", "id", n => clusterId(n), n => n],
+  ["gene", "gene", n => R(n) ? D("gene", R(n)[F.gene]) : "", n => R(n) ? D("gene", R(n)[F.gene]) : "~"],
+  ["product", "product", n => R(n) ? D("product", R(n)[F.product]) : idx(n).product, n => R(n) ? D("product", R(n)[F.product]) : idx(n).product],
+  ["set", "set", n => R(n) ? `<span class="chip ${SET_COLOUR[R(n)[F.set]]}">${SET_NAME[R(n)[F.set]]}</span>` : '<span class="chip">not analysed</span>', n => R(n) ? R(n)[F.set] : 9],
+  ["tier", "tier", n => R(n) ? D("tier", R(n)[F.anchor_tier]).replace(/_/g, " ").toLowerCase() : "", n => R(n) ? R(n)[F.anchor_tier] : 99],
+  ["amr class", "amr", n => R(n) ? amrOf(n).map(t => t.toLowerCase()).join(", ") : "", n => R(n) ? D("amrclass", R(n)[F.amr_classes]) || "~" : "~~"],
+  ["subclass", "sub", n => R(n) ? subOf(n).map(t => t.toLowerCase()).join(", ") : "", n => R(n) ? D("amrsubclass", R(n)[F.amr_subclasses]) || "~" : "~~"],
+  ["pangenome", "class", n => R(n) ? D("class", R(n)[F.pangenome_class]) : idx(n).cls, n => R(n) ? D("class", R(n)[F.pangenome_class]) : idx(n).cls],
+  ["prevalence", "r", n => pct(R(n) ? R(n)[F.prevalence_permille] : idx(n).prevalence), n => R(n) ? R(n)[F.prevalence_permille] : idx(n).prevalence],
+  ["members", "r", n => fmt(R(n) ? R(n)[F.n_members] : idx(n).members), n => R(n) ? R(n)[F.n_members] : idx(n).members],
+  ["aa", "r", n => R(n) ? R(n)[F.aa_len] : "", n => R(n) ? R(n)[F.aa_len] : -1],
+  ["plddt", "r", n => R(n) ? f1(R(n)[F.mean_plddt_x10] / 10) : "", n => R(n) ? R(n)[F.mean_plddt_x10] : -1],
+  ["max var", "r", n => R(n) && R(n)[F.has_variation] ? f1(R(n)[F.max_variation_x10] / 10) + "%" : "", n => R(n) && R(n)[F.has_variation] ? R(n)[F.max_variation_x10] : -1],
+  ["domains", "r", n => R(n) ? R(n)[F.n_domains] : "", n => R(n) ? R(n)[F.n_domains] : -1],
+  ["best TM", "r", n => CL.fold[n] ? (CL.fold[n][0][3] / 1000).toFixed(2) : "", n => CL.fold[n] ? CL.fold[n][0][3] : -1],
+  ["islands", "r", n => R(n) ? fmt(R(n)[F.n_islands]) : "", n => R(n) ? R(n)[F.n_islands] : -1],
+];
+let LISTED = [];
+function listed(){
+  const q = $('q').value, S = search(q), cls = $('fClass').value, tier = $('fTier').value, amr = $('fAmr').value, sub = $('fSub').value;
+  const wantVar = $('fVar').getAttribute('aria-pressed') === 'true', wantFold = $('fFold').getAttribute('aria-pressed') === 'true';
+  let deep = S ? S.deep : ANALYSED;
+  deep = deep.filter(n => { const r = R(n);
+    if(st.set !== "" && r[F.set] !== +st.set) return false;
+    if(cls !== "" && r[F.pangenome_class] !== +cls) return false;
+    if(tier !== "" && r[F.anchor_tier] !== +tier) return false;
+    if(amr !== "" && !amrOf(n).includes(amr)) return false;
+    if(sub !== "" && !subOf(n).includes(sub)) return false;
+    if(wantVar && !r[F.has_variation]) return false;
+    if(wantFold && !CL.fold[n]) return false;
+    return true; });
+  const k = COLS.find(c => c[0] === st.sort)[3];
+  deep.sort((a, b) => { const x = k(a), y = k(b); return (x < y ? -1 : x > y ? 1 : 0) * st.dir || a - b; });
+  const index = (S && st.set === "" && cls === "" && tier === "" && amr === "" && sub === "" && !wantVar && !wantFold) ? S.index : [];
+  return {rows: deep.concat(index), nDeep: deep.length, nIndex: index.length, direct: S && S.direct};
+}
+const CAP = 400;
+function table(){
+  const L = listed(); LISTED = L.rows;
+  $('ncl').textContent = `${fmt(L.nDeep)} analysed${L.nIndex ? ` + ${fmt(L.nIndex)} from the index` : ""}`;
+  const show = L.rows.slice(0, CAP);
+  $('tbl').innerHTML = `<thead><tr>${COLS.map(c => `<th class="sortable ${c[1] === "r" ? "r" : ""}" data-k="${c[0]}"${st.sort === c[0] ? ` aria-sort="${st.dir > 0 ? "ascending" : "descending"}"` : ""}>${c[0]}</th>`).join("")}</tr></thead><tbody>` +
+    show.map(n => `<tr tabindex="0" data-n="${n}"${n === st.cur ? ' class="active"' : ''}>${COLS.map(c => `<td class="${c[1] === "r" ? "r" : ""}${c[0] === "id" || c[0] === "gene" ? " k" : ""}${c[0] === "product" || c[1] === "amr" || c[1] === "sub" ? " wrap" : ""}">${c[2](n)}</td>`).join("")}</tr>`).join("") +
+    (L.rows.length > show.length ? `<tr><td colspan="${COLS.length}" class="note">${fmt(L.rows.length - show.length)} more match — narrow the search.</td></tr>` : "") + `</tbody>`;
+  if(!show.length) $('tbl').innerHTML += `<tbody><tr><td colspan="${COLS.length}" class="empty">no cluster matches</td></tr></tbody>`;
+  $('tbl').querySelectorAll('th.sortable').forEach(th => th.onclick = () => { if(st.sort === th.dataset.k) st.dir = -st.dir; else { st.sort = th.dataset.k; st.dir = th.classList.contains("r") ? -1 : 1; } table(); });
+  const tb = $('tbl').querySelector('tbody');
+  tb.onclick = e => { const tr = e.target.closest('tr[data-n]'); if(tr) select(+tr.dataset.n); };
+  tb.onkeydown = e => { const tr = e.target.closest('tr[data-n]'); if(!tr) return;
+    if(e.key === "Enter") select(+tr.dataset.n);
+    if(e.key === "ArrowDown" && tr.nextElementSibling){ tr.nextElementSibling.focus(); e.preventDefault(); }
+    if(e.key === "ArrowUp" && tr.previousElementSibling){ tr.previousElementSibling.focus(); e.preventDefault(); } };
+  if(L.direct != null && L.direct !== st.cur) select(L.direct);
+}
+$('q').oninput = debounce(table, 160);
+['fClass', 'fTier'].forEach(i => $(i).onchange = table);
+$('fAmr').onchange = () => { QS.set({amr: $('fAmr').value || null}); table(); };
+$('fSub').onchange = () => { QS.set({subclass: $('fSub').value || null}); table(); };
+['fVar', 'fFold'].forEach(i => $(i).onclick = () => { const b = $(i); b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); table(); });
+const setSet = wireSeg($('fSet'), v => { st.set = v; QS.set({set: v === "" ? null : SET_NAME[+v]}); table(); }, "");
+
+/* ============================ detail ============================ */
+function kv(rows){ return '<dl class="kv">' + rows.filter(r => r[1] != null && r[1] !== "").map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("") + '</dl>'; }
+const frame = (label, body, tools) => body ? `<div class="frame"><span class="frame__label">${label}</span>${tools ? `<div class="frame__tools">${tools}</div>` : ""}<div class="frame__body">${body}</div></div>` : "";
+const chips = (s, cls) => s ? s.split(";").map(x => `<span class="chip ${cls || ""}">${esc(x)}</span>`).join(" ") : "";
+const TIER_TEXT = {
+  CORE_AMR: "a resistance annotation on a core gene: present in nearly every genome, so it is the chromosomal backbone, not cargo. Its resistance meaning is intrinsic or comes from point mutations.",
+  SOFTCORE_AMR: "a resistance annotation on a soft-core gene, present in most genomes but not all.",
+  SHELL_AMR: "a resistance gene in the shell of the pangenome: common but far from universal, the signature of a family that moves.",
+  MOBILE_AMR: "an acquired resistance gene in the cloud of the pangenome. This is the cargo that defines tier-1 and tier-2 islands.",
+  POINT_ONLY: "a chromosomal gene whose resistance is entirely from point mutations in the catalog; the gene itself is in every genome.",
+  NOT_AN_ANCHOR: "not a resistance anchor. It was analysed as stress or virulence cargo and its islands are the ones it happens to sit in.",
+};
+function headHTML(n){
+  const r = R(n), ix = inRange(n) ? idx(n) : null;
+  const gene = r ? D("gene", r[F.gene]) : "", product = r ? D("product", r[F.product]) : (ix ? ix.product : "");
+  const b = [];
+  if(r){ b.push(`<span class="badge badge--${SET_COLOUR[r[F.set]]}">${SET_NAME[r[F.set]]}</span>`);
+    b.push(`<span class="badge">${esc(D("tier", r[F.anchor_tier]).replace(/_/g, " "))}</span>`);
+    b.push(`<span class="badge">${esc(D("class", r[F.pangenome_class]))}</span>`);
+    if(r[F.is_fragment]) b.push(`<span class="badge badge--mustard">fragment</span>`);
+    if(D("source", r[F.source]) === "colabfold") b.push(`<span class="badge badge--teal">colabfold</span>`);
+    if(D("status", r[F.status]) === "folded_by_domain") b.push(`<span class="badge badge--teal">folded by domain</span>`);
+  } else b.push(`<span class="badge">not analysed</span>`, `<span class="badge">${esc(ix ? ix.cls : "")}</span>`);
+  return `<div class="frame"><div class="frame__body"><div class="head">
+    <div><div class="head__name">${esc(gene || clusterId(n))} <span class="light">${gene ? clusterId(n) : ""}</span></div>
+      <div class="head__sub">${esc(product)}</div><div class="badges" style="margin-top:10px">${b.join("")}</div></div>
+    <div class="head__actions">
+      ${r && r[F.n_islands] ? `<a class="btn" href="${link.islandsOf(n)}">islands · ${fmt(r[F.n_islands])}</a>` : (!r ? `<a class="btn" href="${link.islandsOf(n)}">islands</a>` : "")}
+      ${r && r[F.n_islands_t3] ? `<a class="btn btn--ghost" href="${link.islandsOf(n)}&tier=2" title="tier-3 backbone windows around this gene">windows · ${fmt(r[F.n_islands_t3])}</a>` : ""}
+      <button class="btn btn--ghost" id="copyId">copy id</button></div></div></div></div>`;
+}
+function identity(n){
+  const r = R(n), ix = inRange(n) ? idx(n) : null;
+  if(!r) return kv([["product", esc(ix.product)], ["pangenome class", esc(ix.cls)], ["prevalence", pct(ix.prevalence)], ["members", fmt(ix.members)], ["architecture", esc(ix.arch) || '<span class="mute">no Pfam domain</span>'],
+    ["note", `<span class="mute">this cluster is outside the three analysed sets; only the pangenome index describes it</span>`]]);
+  return kv([
+    ["gene", `<b>${esc(D("gene", r[F.gene]))}</b>`], ["product", esc(D("product", r[F.product]))],
+    ["catalog", r[F.catalog_symbol] >= 0 ? `${esc(D("catalog", r[F.catalog_symbol]))}${r[F.catalog_identity_x10] >= 0 ? ` <span class="mute">· ${f1(r[F.catalog_identity_x10] / 10)}% identity to the reference</span>` : ""}` : ""],
+    ["classes", chips(D("amrclass", r[F.amr_classes]), "coral")],
+    ["subclasses", chips(D("amrsubclass", r[F.amr_subclasses]))],
+    ["pangenome", `${esc(D("class", r[F.pangenome_class]))} <span class="mute">· ${pct(r[F.prevalence_permille])} of genomes</span>`],
+    ["members", `${fmt(r[F.n_members])} <span class="mute">in ${fmt(r[F.n_genomes])} genomes · ${fmt(r[F.n_distinct_seqs])} distinct sequences</span>`],
+    ["length", `${r[F.aa_len]} aa${r[F.is_fragment] ? ' <span class="chip mustard">fragment</span>' : ""}`],
+    ["architecture", esc(D("arch", r[F.architecture])) || '<span class="mute">no Pfam domain</span>'],
+  ]);
+}
+function anchorTier(n){
+  const r = R(n); if(!r) return "";
+  const t = D("tier", r[F.anchor_tier]);
+  return `<span class="badge badge--${TIER_COLOUR[t] || ""}">${esc(t.replace(/_/g, " "))}</span><div class="tierline">${esc(TIER_TEXT[t] || "")}</div>` +
+    (r[F.n_islands] ? `<div class="tierline">found in <b>${fmt(r[F.n_islands])}</b> tier-1 or tier-2 islands${r[F.n_islands_t3] ? ` and <b>${fmt(r[F.n_islands_t3])}</b> tier-3 backbone windows` : ""}.</div>` : r[F.n_islands_t3] ? `<div class="tierline">in no tier-1 or tier-2 island; its chromosomal context is drawn as <b>${fmt(r[F.n_islands_t3])}</b> tier-3 backbone windows.</div>` : `<div class="tierline">in no island of any tier.</div>`);
+}
+function variation(n){
+  const r = R(n), V = CL.var[n]; if(!V) return "";
+  const lin = qualValues(V.lin), cop = qualValues(V.cop), L = lin.length, sites = new Set(V.sites);
+  const rects = (vals, y0, h, id) => { let s = ""; for(let i = 0; i < L; i++){ const v = vals[i]; if(v < 0.5) continue; const hh = h * clamp(v / 100, 0.04, 1);
+    s += `<rect x="${i}" y="${(y0 + h - hh).toFixed(2)}" width="1" height="${hh.toFixed(2)}" fill="${varColour(v)}"/>`; } return s; };
+  let svg = `<svg class="track" viewBox="0 0 ${L} 46" preserveAspectRatio="none" data-n="${n}"><rect x="0" y="0" width="${L}" height="46" fill="transparent"/>`;
+  svg += `<line x1="0" y1="22.5" x2="${L}" y2="22.5" stroke="var(--border)" vector-effect="non-scaling-stroke"/>`;
+  svg += rects(lin, 0, 21) + rects(cop, 24, 21);
+  for(const p of V.sites) svg += `<line x1="${p - 0.5}" y1="0" x2="${p - 0.5}" y2="46" stroke="var(--c-green)" stroke-width="1.2" vector-effect="non-scaling-stroke"/>`;
+  svg += `<line id="vcur" x1="-1" y1="0" x2="-1" y2="46" stroke="var(--fg)" vector-effect="non-scaling-stroke"/></svg>`;
+  const top = V.top.map(([p, f]) => `<tr><td class="k">${p} <span class="mute">${esc(V.ref[p - 1] || "")}</span>${sites.has(p) ? ' <span class="chip green">catalog</span>' : ""}</td><td class="r">${(f / 10).toFixed(1)}%</td></tr>`).join("");
+  return `<div class="tracklab"><span>lineages varying · top</span><span>copies varying · bottom</span></div>${svg}
+    <div class="tracklab"><span>1</span><span>${L}</span></div><div class="readout" id="vread">hover the track for a position</div>
+    <div class="legend" style="margin-bottom:12.5px">${VAR_BUCKETS.map(b => `<span><span class="dot" style="background:${b[1]}"></span>${b[2]}</span>`).join("")}<span><span style="display:inline-block;width:2.5px;height:12.5px;background:var(--c-green)"></span>catalog site</span></div>` +
+    kv([["lineages", `${fmt(r[F.n_lineages])} <span class="mute">· ${fmt(r[F.n_copies])} copies</span>`],
+        ["identity", `${f1(r[F.mean_identity_x10000] / 100, 2)}% <span class="mute">mean, to the reference, over lineages</span>`],
+        ["positions", `${fmt(r[F.n_positions_ge_5pct])} <span class="mute">vary in ≥5% of lineages${r[F.max_variation_x10] >= 0 ? ` · max ${f1(r[F.max_variation_x10] / 10)}%` : ""}</span>`],
+        ["catalog sites", V.sites.length ? V.sites.map(p => `<span class="chip green">${esc(V.ref[p - 1] || "")}${p}</span>`).join(" ") : '<span class="mute">none in the catalog</span>']]) +
+    `<table class="data-table" style="margin-top:12.5px"><thead><tr><th>most variable</th><th class="r">lineages</th></tr></thead><tbody>${top}</tbody></table>`;
+}
+function structurePanel(n){
+  const r = R(n), rec = RECS[n]; if(!r || !rec) return "";
+  const ch = CHAINS[rec.chains[0]], src = SD.source[ch.src], status = D("status", r[F.status]), pl = r[F.mean_plddt_x10] / 10;
+  return `<div class="stagegrid"><div>
+      <div class="ctl"><div class="seg" id="mode"><button data-v="plddt">confidence</button><button data-v="var">variation</button></div>
+        <div class="seg" id="modseg" style="display:none"></div><span class="sp"></span>
+        <button class="btn btn--ghost" id="tSpin" aria-pressed="false">spin</button><button class="btn btn--ghost" id="tReset">reset view</button></div>
+      <div class="stagewrap"><canvas class="stage" id="stage"></canvas><div class="ovl" id="ovl"></div><div class="stagetip" id="stip"></div></div>
+      <div class="legend" id="stagelegend" style="margin-top:10px"></div>
+      <svg class="ribbon" id="ribbon"></svg><div class="riblab"><span>1</span><span id="ribR"></span></div>
+      <div class="readout" id="rread">hover the ribbon or the trace for a residue</div>
+      <div class="legend" style="margin-top:8px"><span>row 1 · confidence</span><span>row 2 · variation across lineages</span><span>row 3 · Pfam domains</span><span><span style="display:inline-block;width:2.5px;height:12.5px;background:var(--c-green)"></span>catalog site</span></div>
+    </div><div>
+      <div class="badges" style="margin-bottom:12.5px"><span class="badge badge--${plddtClass(pl)}">pLDDT ${f1(pl)}</span>${src === "colabfold" ? '<span class="badge badge--teal">colabfold</span>' : ""}${rec.by_domain ? '<span class="badge badge--teal">folded by domain</span>' : ""}${ch.frag ? '<span class="badge badge--mustard">fragment</span>' : ""}</div>` +
+    kv([["source", esc(src.replace(/_/g, " "))], ["status", esc(status.replace(/_/g, " "))],
+        ["length", `${rec.whole || ch.n} aa${rec.modules ? ` <span class="mute">in ${rec.modules.length} modules</span>` : ""}`],
+        ["confidence", `${f1(pl)} <span class="mute">mean${r[F.min_plddt_x10] >= 0 ? ` · ${f1(r[F.min_plddt_x10] / 10)} min` : ""}${r[F.ptm_x1000] >= 0 ? ` · pTM ${(r[F.ptm_x1000] / 1000).toFixed(2)}` : ""}${rec.by_domain ? " · over the modules" : ""}</span>`],
+        ["modules", rec.modules ? rec.modules.map((m, k) => `<div>m${k + 1} · ${m[0]}–${m[1]} · <span class="mute">${esc(SD.moddom[m[3]] || "")}</span></div>`).join("") : ""],
+        ["variation", r[F.has_variation] ? `${r[F.max_variation_x10] >= 0 ? f1(r[F.max_variation_x10] / 10) + "% max · " : ""}${fmt(r[F.n_positions_ge_5pct])} positions ≥5% <span class="mute">· ${fmt(r[F.n_lineages])} lineages</span>` : '<span class="mute">no variation profile</span>']]) +
+    `<div class="tierline" style="margin-top:12.5px">A Cα backbone trace, depth drawn as thickness and fade. Drag to rotate, scroll to zoom, hover a residue. ${rec.by_domain ? "Too long for one fold: each module was predicted on its own and is drawn on its own. " : ""}Below 50 the model is not evidence.</div>` +
+    (CL.fold[n] ? `<div class="subhead">best fold matches</div>${fold(n)}` : `<div class="subhead">best fold matches</div><div class="mute">no Foldseek hit</div>`) +
+    `</div></div>`;
+}
+function pfam(n){
+  const r = R(n), dom = CL.dom[n]; if(!dom || !dom.length) return "";
+  const L = r[F.aa_len] || Math.max(...dom.map(d => d[2]));
+  const svg = `<svg class="domstrip" viewBox="0 0 ${L} 34" preserveAspectRatio="none"><line x1="0" y1="17" x2="${L}" y2="17" stroke="var(--border-strong)" vector-effect="non-scaling-stroke"/>` +
+    dom.map((d, i) => `<rect x="${d[1]}" y="${i % 2 ? 9 : 5}" width="${d[2] - d[1]}" height="20" fill="var(--highlight)" stroke="var(--fg-mute)" vector-effect="non-scaling-stroke"><title>${esc(CL.pfam[d[0]][1])} ${d[1]}–${d[2]}</title></rect>`).join("") + `</svg>`;
+  return svg + `<div class="tracklab"><span>1</span><span>${L}</span></div><div class="domlist">` +
+    dom.map(d => { const p = CL.pfam[d[0]]; return `<div><b>${esc(p[1])}</b><span class="mute" title="${esc(p[2])}">${esc(p[0])}</span><span class="pos">${d[1]}–${d[2]}</span></div>`; }).join("") + `</div>` +
+    `<div class="tierline">${r[F.n_domains]} domain${r[F.n_domains] === 1 ? "" : "s"} · ${pct(r[F.covered_permille], 0)} of the sequence covered</div>`;
+}
+function fold(n){
+  const hits = CL.fold[n]; if(!hits || !hits.length) return "";
+  return `<table class="data-table hits"><thead><tr><th>match</th><th class="r">TM</th><th class="r">seq id</th></tr></thead><tbody>` +
+    hits.map(h => `<tr><td class="wrap"><span class="chip ${h[0] === 0 ? "" : "purple"}">${esc(D("db", h[0]))}</span> <b>${esc(D("target", h[1]))}</b>${h[5] ? ' <span class="dot green" style="vertical-align:middle;margin-left:5px"></span>' : ""}<div class="mute" style="font-size:12.5px">${esc(D("tdesc", h[2]).replace(D("target", h[1]), "").trim())}</div></td>
+      <td class="r">${(h[3] / 1000).toFixed(2)}</td><td class="r">${(h[4] / 10).toFixed(0)}%</td></tr>`).join("") + `</tbody></table>
+    <div class="tierline"><span class="dot green" style="vertical-align:middle"></span> same fold as the annotation expects · TM is the alignment TM-score, id the sequence identity of the aligned part</div>`;
+}
+function islands(n){
+  const r = R(n), ids = CL.isl[n] || [], n12 = r ? r[F.n_islands] : 0, n3 = r ? r[F.n_islands_t3] : 0; if(!r || !(n12 + n3)) return "";
+  const shown12 = ids.slice(0, n12), shown3 = ids.slice(n12);
+  return (shown12.length ? `<div class="isl-list">${shown12.map(i => `<a href="${link.island(i)}">${islandId(i)}</a>`).join("")}</div>` : "") +
+    (shown3.length ? `<div class="tierline" style="margin-top:8px">tier-3 backbone windows</div><div class="isl-list">${shown3.map(i => `<a href="${link.island(i)}&tier=2" class="dim">${islandId(i)}</a>`).join("")}</div>` : "") +
+    `<div class="tierline">${ids.length < n12 + n3 ? `${ids.length} of ${fmt(n12)} islands + ${fmt(n3)} windows shown · ` : ""}${n12 ? `<a href="${link.islandsOf(n)}">list every island carrying ${esc(D("gene", r[F.gene]))}</a>` : ""}${n3 ? `${n12 ? " · " : ""}<a href="${link.islandsOf(n)}&tier=2">the ${fmt(n3)} windows, aligned</a>` : ""}</div>`;
+}
+function detail(n){
+  if(n == null || !inRange(n)){ $('detail').innerHTML = ""; return; }
+  const r = R(n);
+  const hasStage = !!RECS[n];
+  $('detail').innerHTML = headHTML(n) + `<div class="masonry">` +
+    frame("identity and product", identity(n)) +
+    frame("anchor tier", anchorTier(n)) +
+    frame(`per-position variation`, variation(n)) +
+    frame("pfam architecture", pfam(n)) +
+    (hasStage ? "" : frame("best fold matches", fold(n))) +
+    frame("islands containing the cluster", islands(n)) + `</div>` +
+    frame("structure", structurePanel(n));
+  $('copyId').onclick = () => copyText(clusterId(n), $('copyId'));
+  if(RECS[n]) mountStage(n);
+  const tr = $('detail').querySelector('svg.track');
+  if(tr){ const V = CL.var[n], lin = qualValues(V.lin), cop = qualValues(V.cop), sites = new Set(V.sites), cur = tr.querySelector('#vcur');
+    tr.onmousemove = e => { const b = tr.getBoundingClientRect(); const i = clamp(Math.floor((e.clientX - b.left) / b.width * lin.length), 0, lin.length - 1);
+      cur.setAttribute('x1', i + 0.5); cur.setAttribute('x2', i + 0.5);
+      $('vread').innerHTML = `<b>${esc(V.ref[i] || "")}${i + 1}</b> · ${lin[i].toFixed(1)}% of lineages · ${cop[i].toFixed(1)}% of copies${sites.has(i + 1) ? ' · <span class="green">catalog site</span>' : ""}`; };
+    tr.onmouseleave = () => { cur.setAttribute('x1', -1); cur.setAttribute('x2', -1); $('vread').textContent = "hover the track for a position"; }; }
+}
+
+/* ============================ the stage ============================ */
+/* The canvas is rebuilt with every record, so everything here is (re)wired by mountStage(n). The
+   tube renderer: the CA trace is smoothed with a Catmull-Rom spline (4 pieces per residue),
+   painter-sorted by depth, and every piece is stroked twice, a dark outline then a fill shaded
+   toward the stage colour with distance, so nearer tube occludes farther tube with a visible edge.
+   Ported from the ArchaeaHQ dashboard's renderer. */
+const SV = {n: null, chain: 0, mode: "plddt", rot: [1,0,0,0,1,0,0,0,1], zoom: 1, spin: false, hover: null};
+let GEO = null, PROJ = null, cv = null, cx2 = null, W = 0, Hh = 0, DPR = 1;
+const REDUCED = matchMedia('(prefers-reduced-motion:reduce)').matches;
+const _co = new Map();
+function coords(ci){
+  let c = _co.get(ci); if(c) return c;
+  const v = varints(CHAINS[ci].xyz), n = v.length / 3, P = new Float32Array(n * 3);
+  let x = 0, y = 0, z = 0, cx = 0, cy = 0, cz = 0;
+  for(let i = 0; i < n; i++){ x += unzig(v[3*i]); y += unzig(v[3*i+1]); z += unzig(v[3*i+2]); P[3*i] = x / 10; P[3*i+1] = y / 10; P[3*i+2] = z / 10; cx += P[3*i]; cy += P[3*i+1]; cz += P[3*i+2]; }
+  cx /= n; cy /= n; cz /= n; let rad = 1;
+  for(let i = 0; i < n; i++){ P[3*i] -= cx; P[3*i+1] -= cy; P[3*i+2] -= cz; const d = Math.hypot(P[3*i], P[3*i+1], P[3*i+2]); if(d > rad) rad = d; }
+  c = {P, n, rad}; _co.set(ci, c); return c;
+}
+function svBuild(){
+  const rec = RECS[SV.n], ci = rec.chains[SV.chain], ch = CHAINS[ci], co = coords(ci);
+  const pl = qualValues(ch.pl), vr = ch.var ? qualValues(ch.var) : null;
+  const mod = rec.modules ? rec.modules.find(m => m[2] === ci) : null;
+  const off = mod ? mod[0] - 1 : 0;
+  const V = CL.var[SV.n];
+  const marks = (V ? V.sites : []).map(p => ({i: p - 1 - off, label: (V.ref[p - 1] || "") + p})).filter(m => m.i >= 0 && m.i < co.n);
+  GEO = {ch, co, pl, vr, off, mod, marks, whole: rec.whole || ch.n, dom: CL.dom[SV.n] || []};
+}
+function resCol(i){ if(SV.mode === "var") return GEO.vr ? varColour(GEO.vr[i]) : "var(--fg-dim)"; return plddtColour(GEO.pl[i]); }
+const _rgb = new Map();
+function cssv(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function toRGB(c){
+  let v = _rgb.get(c); if(v) return v;
+  let t = String(c).trim(); if(t.startsWith("var(")) t = cssv(t.slice(4, -1));
+  if(t[0] === "#"){ const h = t.length === 4 ? t.slice(1).split("").map(x => x + x).join("") : t.slice(1); v = [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; }
+  else { const m = t.match(/[\d.]+/g) || [0,0,0]; v = [+m[0], +m[1], +m[2]]; }
+  _rgb.set(c, v); return v;
+}
+function drawTubes(ctx, p, n, colAt, brk, stage, zmin, zmax, baseW){
+  const S = toRGB(stage), zr = Math.max(1e-6, zmax - zmin), SUB = 4, pieces = [], EDGE = cssv('--edge-rgb'), EK = +cssv('--edge-k') || 1;
+  const splineRun = r => {
+    const m = r.length, P = k => r[Math.max(0, Math.min(m - 1, k))], out = []; let prev = null;
+    for(let i = 0; i < m - 1; i++){
+      const p0 = P(i-1), p1 = P(i), p2 = P(i+1), p3 = P(i+2), col = p1[3];
+      if(!prev) prev = p1;
+      for(let s = 1; s <= SUB; s++){ const t = s / SUB, t2 = t*t, t3 = t2*t, q = [0,0,0];
+        for(let k = 0; k < 3; k++) q[k] = 0.5*(2*p1[k] + (-p0[k]+p2[k])*t + (2*p0[k]-5*p1[k]+4*p2[k]-p3[k])*t2 + (-p0[k]+3*p1[k]-3*p2[k]+p3[k])*t3);
+        out.push([prev[0], prev[1], q[0], q[1], (prev[2]+q[2])/2, col, baseW, 0,0,0,0]); prev = q; }
+    }
+    for(let k = 0; k < out.length; k++){ const a = out[k-1] || out[k], b = out[k+1] || out[k];
+      out[k][7] = (a[0]+a[2])/2; out[k][8] = (a[1]+a[3])/2; out[k][9] = (b[0]+b[2])/2; out[k][10] = (b[1]+b[3])/2; pieces.push(out[k]); }
+  };
+  let run = [];
+  const flush = () => { if(run.length > 1) splineRun(run); run = []; };
+  for(let i = 0; i < n; i++){ if(i > 0 && brk(i - 1)) flush(); run.push([p[3*i], p[3*i+1], p[3*i+2], colAt(Math.min(i, n - 1))]); }
+  flush();
+  pieces.sort((a, b) => a[4] - b[4]);
+  const NS = 28, per = Math.ceil(pieces.length / NS);
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  for(let s0 = 0; s0 < pieces.length; s0 += per){
+    const slab = pieces.slice(s0, s0 + per), byW = new Map();
+    for(const q of slab){ const d = (q[4]-zmin)/zr, w = Math.round(q[6]*(0.74+0.46*d)*2)/2; q[11] = w; q[12] = d; let a = byW.get(w); if(!a){ a = []; byW.set(w, a); } a.push(q); }
+    const dm = (slab[0][12] + slab[slab.length-1][12]) / 2;
+    ctx.strokeStyle = `rgba(${EDGE},${(EK*(0.55+0.4*dm)).toFixed(2)})`;
+    byW.forEach((arr, w) => { ctx.lineWidth = w + 2.2; ctx.beginPath(); for(const q of arr){ ctx.moveTo(q[0], q[1]); ctx.lineTo(q[2], q[3]); } ctx.stroke(); });
+    for(const q of slab){ const f = 0.42 + 0.58*q[12], c = toRGB(q[5]);
+      ctx.strokeStyle = `rgb(${Math.round(S[0]+(c[0]-S[0])*f)},${Math.round(S[1]+(c[1]-S[1])*f)},${Math.round(S[2]+(c[2]-S[2])*f)})`;
+      ctx.lineWidth = q[11]; ctx.beginPath(); ctx.moveTo(q[7], q[8]); ctx.lineTo(q[0], q[1]); ctx.lineTo(q[2], q[3]); ctx.lineTo(q[9], q[10]); ctx.stroke(); }
+  }
+}
+function drawBall(ctx, x, y, r, col){
+  ctx.beginPath(); ctx.arc(x, y, r + 1.4, 0, 6.2832); ctx.fillStyle = `rgba(${cssv('--edge-rgb')},${(0.85 * (+cssv('--edge-k') || 1)).toFixed(2)})`; ctx.fill();
+  ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fillStyle = col; ctx.fill();
+}
+function rotmul(a, b){ const o = new Array(9); for(let i = 0; i < 3; i++) for(let j = 0; j < 3; j++){ let t = 0; for(let k = 0; k < 3; k++) t += a[3*i+k]*b[3*k+j]; o[3*i+j] = t; } return o; }
+function axisRot(ax, ang){ const c = Math.cos(ang), t = Math.sin(ang); return ax === 'x' ? [1,0,0, 0,c,-t, 0,t,c] : [c,0,t, 0,1,0, -t,0,c]; }
+function svResize(){ if(!cv) return; DPR = Math.min(2, devicePixelRatio || 1); const r = cv.getBoundingClientRect(); W = r.width; Hh = r.height; cv.width = Math.round(W * DPR); cv.height = Math.round(Hh * DPR); svRender(); }
+function svRender(){
+  if(!cv || !cx2) return;
+  cx2.setTransform(DPR, 0, 0, DPR, 0, 0); const stage = cssv('--bg-2'); cx2.fillStyle = stage; cx2.fillRect(0, 0, W, Hh);
+  if(!GEO) return;
+  const {co} = GEO, Rm = SV.rot, sc = (Math.min(W, Hh) * 0.44 / co.rad) * SV.zoom, ox = W / 2, oy = Hh / 2;
+  const p = new Float32Array(co.n * 3); let zmin = 1e9, zmax = -1e9;
+  for(let i = 0; i < co.n; i++){ const x = co.P[3*i], y = co.P[3*i+1], z = co.P[3*i+2];
+    const X = Rm[0]*x+Rm[1]*y+Rm[2]*z, Y = Rm[3]*x+Rm[4]*y+Rm[5]*z, Z = Rm[6]*x+Rm[7]*y+Rm[8]*z;
+    p[3*i] = ox + X*sc; p[3*i+1] = oy - Y*sc; p[3*i+2] = Z; if(Z < zmin) zmin = Z; if(Z > zmax) zmax = Z; }
+  PROJ = p;
+  drawTubes(cx2, p, co.n, resCol, i => Math.hypot(co.P[3*i]-co.P[3*i+3], co.P[3*i+1]-co.P[3*i+4], co.P[3*i+2]-co.P[3*i+5]) > 4.6, stage, zmin, zmax, Math.max(3.2, Math.min(10, 1.3 * sc)));
+  const green = cssv('--c-green'), ink = cssv('--fg');
+  GEO.marks.forEach((m, k) => { const x = p[3*m.i], y = p[3*m.i+1];
+    drawBall(cx2, x, y, Math.max(5, Math.min(11, 1.5 * sc)), green);
+    cx2.font = "500 12.5px 'JetBrains Mono', monospace"; cx2.lineWidth = 3; cx2.strokeStyle = stage; cx2.lineJoin = "round";
+    cx2.strokeText(m.label, x + 10, y - 9 + (k % 2 ? 14 : 0)); cx2.fillStyle = ink; cx2.fillText(m.label, x + 10, y - 9 + (k % 2 ? 14 : 0)); });
+  if(SV.hover != null && SV.hover < co.n){ cx2.beginPath(); cx2.arc(p[3*SV.hover], p[3*SV.hover+1], 7.5, 0, 6.2832); cx2.strokeStyle = ink; cx2.lineWidth = 1.4; cx2.stroke(); }
+  cx2.fillStyle = cssv('--fg-mute'); cx2.font = "11px 'JetBrains Mono', monospace"; cx2.fillText("N", p[0] + 6, p[1] + 3); cx2.fillText("C", p[3*(co.n-1)] + 6, p[3*(co.n-1)+1] + 3);
+}
+function svOverlay(){
+  const r = R(SV.n), ch = GEO.ch, pl = r ? r[F.mean_plddt_x10] / 10 : 0;
+  $('ovl').innerHTML = `<b>${esc(D("gene", r[F.gene]) || clusterId(SV.n))}</b>${GEO.mod ? ` · module ${SV.chain + 1}, residues ${GEO.mod[0]}–${GEO.mod[1]} of ${GEO.whole}` : ` · ${ch.n} residues`}<br>${esc(SD.source[ch.src].replace(/_/g, " "))} · mean pLDDT ${f1(pl)}${ch.frag ? " · fragment" : ""}${SV.mode === "var" && !GEO.vr ? " · no variation profile for this chain" : ""}`;
+  $('stagelegend').innerHTML = SV.mode === "plddt"
+    ? PLDDT_BUCKETS.map((b, i) => `<span><span class="dot" style="background:${b[1]}"></span>pLDDT ${i === 0 ? "below 50" : i === 3 ? "above 90" : `${PLDDT_BUCKETS[i - 1][0]}–${b[0]}`}</span>`).join("") + `<span class="dim">below 50 the model is not evidence</span>`
+    : VAR_BUCKETS.map(b => `<span><span class="dot" style="background:${b[1]}"></span>${b[2]}</span>`).join("") + `<span><span class="dot" style="background:var(--c-green)"></span>catalog site</span>`;
+}
+function svRibbon(){
+  const g = GEO, L = g.whole, off = g.off, n = g.co.n, sv = $('ribbon');
+  const parts = [`<rect x="0" y="0" width="${L}" height="96" fill="transparent"/>`];
+  for(let i = 0; i < n; i++){ const v = g.pl[i], h = 28 * clamp(v / 100, 0.05, 1); parts.push(`<rect x="${i + off}" y="${(32 - h).toFixed(1)}" width="1" height="${h.toFixed(1)}" fill="${plddtColour(v)}"/>`); }
+  if(g.vr) for(let i = 0; i < n; i++){ const v = g.vr[i]; if(v < 0.5) continue; const h = 22 * clamp(v / 100, 0.06, 1); parts.push(`<rect x="${i + off}" y="${(60 - h).toFixed(1)}" width="1" height="${h.toFixed(1)}" fill="${varColour(v)}"/>`); }
+  else parts.push(`<line x1="${off}" y1="59" x2="${off + n}" y2="59" stroke="var(--fg-dim)" vector-effect="non-scaling-stroke"/>`);
+  parts.push(`<line x1="0" y1="72" x2="${L}" y2="72" stroke="var(--border-strong)" vector-effect="non-scaling-stroke"/>`);
+  g.dom.forEach((d, k) => parts.push(`<rect x="${d[1]}" y="${k % 2 ? 68 : 64}" width="${d[2] - d[1]}" height="14" fill="var(--highlight)" stroke="var(--fg-mute)" vector-effect="non-scaling-stroke"><title>${esc(CL.pfam[d[0]][1])} ${d[1]}–${d[2]}</title></rect>`));
+  if(g.mod) parts.push(`<rect x="0" y="0" width="${L}" height="62" fill="var(--veil)"/><rect x="${off}" y="0" width="${n}" height="62" fill="transparent" stroke="var(--fg-mute)" vector-effect="non-scaling-stroke"/>`);
+  const V = CL.var[SV.n]; if(V) for(const p of V.sites) parts.push(`<line x1="${p - 0.5}" y1="0" x2="${p - 0.5}" y2="84" stroke="var(--c-green)" stroke-width="1.2" vector-effect="non-scaling-stroke"/>`);
+  parts.push(`<line id="rcur" x1="-1" y1="0" x2="-1" y2="96" stroke="var(--fg)" vector-effect="non-scaling-stroke"/>`);
+  sv.setAttribute('viewBox', `0 0 ${L} 96`); sv.setAttribute('preserveAspectRatio', 'none'); sv.innerHTML = parts.join("");
+  $('ribR').textContent = L;
+  sv.onmousemove = e => { const b = sv.getBoundingClientRect(); const w = clamp(Math.floor((e.clientX - b.left) / b.width * L), 0, L - 1); const i = w - off;
+    if(i >= 0 && i < n){ SV.hover = i; svRender(); } setCursor(w); svReadout(w); };
+  sv.onmouseleave = () => { SV.hover = null; svRender(); setCursor(-1); $('rread').textContent = "hover the ribbon or the trace for a residue"; };
+}
+function setCursor(w){ const c = $('rcur'); if(c){ c.setAttribute('x1', w + 0.5); c.setAttribute('x2', w + 0.5); } }
+function svReadout(w){
+  const g = GEO, i = w - g.off, V = CL.var[SV.n], inChain = i >= 0 && i < g.co.n;
+  const d = g.dom.find(x => w + 1 >= x[1] && w + 1 <= x[2]);
+  const lin = V && V.lin ? qualValues(V.lin) : null;
+  $('rread').innerHTML = `<b>${inChain ? esc(g.ch.seq[i]) : (V && V.ref[w] ? esc(V.ref[w]) : "")}${w + 1}</b>${inChain ? ` · pLDDT ${g.pl[i].toFixed(0)}` : " · outside this module"}${g.vr && inChain ? ` · varies in ${g.vr[i].toFixed(1)}% of lineages` : (lin ? ` · varies in ${(lin[w] || 0).toFixed(1)}% of lineages` : "")}${d ? ` · ${esc(CL.pfam[d[0]][1])}` : ""}${V && V.sites.includes(w + 1) ? ' · <span class="green">catalog site</span>' : ""}`;
+}
+function svSpin(){ if(!SV.spin || !cv) return; SV.rot = rotmul(axisRot('y', 0.008), SV.rot); svRender(); requestAnimationFrame(svSpin); }
+function mountStage(n){
+  SV.n = n; SV.chain = 0; SV.rot = [1,0,0,0,1,0,0,0,1]; SV.zoom = 1; SV.spin = false; SV.hover = null; GEO = null; PROJ = null;
+  cv = $('stage'); cx2 = cv.getContext('2d');
+  const rec = RECS[n], ms = $('modseg');
+  if(rec.modules){ ms.style.display = ""; ms.innerHTML = rec.modules.map((m, k) => `<button data-v="${k}">m${k + 1} · ${m[0]}–${m[1]}</button>`).join("");
+    wireSeg(ms, v => { SV.chain = +v; svBuild(); svOverlay(); svRibbon(); svRender(); }, "0"); }
+  wireSeg($('mode'), v => { SV.mode = v; if(GEO){ svOverlay(); svRender(); } }, SV.mode);
+  let drag = null;
+  cv.addEventListener('pointerdown', e => { drag = {x: e.clientX, y: e.clientY}; cv.classList.add('drag'); cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointerup', () => { drag = null; cv.classList.remove('drag'); });
+  cv.addEventListener('pointermove', e => {
+    if(drag){ const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag = {x: e.clientX, y: e.clientY};
+      SV.rot = rotmul(rotmul(axisRot('y', dx * 0.0075), axisRot('x', dy * 0.0075)), SV.rot); svRender(); return; }
+    if(!GEO || !PROJ) return;
+    const r = cv.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    let best = null, bd = 156;
+    for(let i = 0; i < GEO.co.n; i++){ const d = (PROJ[3*i] - mx) ** 2 + (PROJ[3*i+1] - my) ** 2; if(d < bd){ bd = d; best = i; } }
+    const t = $('stip');
+    if(best != null){ SV.hover = best; const w = best + GEO.off;
+      t.innerHTML = `<b>${esc(GEO.ch.seq[best])}${w + 1}</b> · pLDDT ${GEO.pl[best].toFixed(0)}${GEO.vr ? ` · ${GEO.vr[best].toFixed(1)}% vary` : ""}`;
+      t.style.display = "block"; t.style.left = Math.min(r.width - 200, mx + 15) + "px"; t.style.top = (my + 15) + "px"; setCursor(w); svReadout(w); }
+    else { SV.hover = null; t.style.display = "none"; setCursor(-1); }
+    svRender();
+  });
+  cv.addEventListener('pointerleave', () => { SV.hover = null; $('stip').style.display = "none"; setCursor(-1); svRender(); });
+  cv.addEventListener('wheel', e => { e.preventDefault(); SV.zoom = clamp(SV.zoom * (e.deltaY < 0 ? 1.12 : 0.89), 0.4, 6); svRender(); }, {passive: false});
+  const sp = $('tSpin');
+  if(REDUCED){ sp.disabled = true; sp.title = "off: reduced motion is on"; }
+  else sp.onclick = () => { SV.spin = !SV.spin; sp.setAttribute('aria-pressed', String(SV.spin)); if(SV.spin) svSpin(); };
+  $('tReset').onclick = () => { SV.rot = [1,0,0,0,1,0,0,0,1]; SV.zoom = 1; svRender(); };
+  svBuild(); svOverlay(); svRibbon(); svResize();
+}
+addEventListener('resize', debounce(svResize, 150));
+document.addEventListener('themechange', () => { _rgb.clear(); svRender(); });
+document.fonts && document.fonts.ready.then(() => svRender());
+
+function select(n){
+  st.cur = n; QS.set({cluster: clusterId(n)});
+  document.querySelectorAll('#tbl tbody tr[data-n]').forEach(tr => tr.classList.toggle('active', +tr.dataset.n === n));
+  detail(n);
+  const d = $('detail'); if(d.firstChild) d.scrollIntoView({block: "start", behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? "auto" : "smooth"});
+}
+
+/* ============================ boot ============================ */
+{ const s = QS.get("set"); const i = SET_NAME.indexOf(s); if(i >= 0){ st.set = String(i); $('fSet').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === st.set))); } }
+{ const a = QS.get("amr"), b = QS.get("subclass"); if(a && [...$('fAmr').options].some(o => o.value === a)) $('fAmr').value = a; if(b && [...$('fSub').options].some(o => o.value === b)) $('fSub').value = b; }
+table();
+{ let c = parseClusterArg(QS.get("cluster")); if(c == null || !inRange(c)) c = LISTED[0]; if(c != null && inRange(c)){ st.cur = c; document.querySelectorAll('#tbl tbody tr[data-n]').forEach(tr => tr.classList.toggle('active', +tr.dataset.n === c)); detail(c); const tr = document.querySelector('#tbl tr.active'); if(tr) tr.scrollIntoView({block: "nearest"}); } }
+</script>
+</body>
+</html>
