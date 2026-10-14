@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AMR islands dashboard</title>
+<style>
+  :root { --bg:#fbfaf7; --fg:#1d1d1b; --muted:#5e5e58; --line:#d9d6cd; --accent:#b8503a; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg:#15161a; --fg:#ebe8e0; --muted:#a39f94; --line:#34363c; --accent:#e9876f; }
+  }
+  :root[data-theme="dark"] { --bg:#15161a; --fg:#ebe8e0; --muted:#a39f94; --line:#34363c; --accent:#e9876f; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:48px 16px 64px; }
+  h1 { font-size:1.6rem; margin:0 0 .25rem; }
+  p.lead { color:var(--muted); margin:0 0 2rem; }
+  ul { list-style:none; padding:0; margin:0; }
+  li { border-top:1px solid var(--line); padding:18px 0; }
+  li:last-child { border-bottom:1px solid var(--line); }
+  a.page { font-weight:600; color:var(--accent); text-decoration:none; font-size:1.1rem; }
+  a.page:hover { text-decoration:underline; }
+  li p { margin:.3rem 0 0; color:var(--muted); }
+  footer { margin-top:2.5rem; color:var(--muted); font-size:.9rem; }
+  footer a { color:inherit; }
+</style>
+</head>
+<body>
+<main>
+  <h1>AMR islands dashboard</h1>
+  <p class="lead">Antimicrobial resistance, stress and virulence genes across 7,287 <em>Citrobacter freundii</em> group isolates
+  (NCBI Pathogen Detection PDG000000039.1314). Each page is self-contained and may take a few seconds to load.</p>
+  <ul>
+    <li><a class="page" href="Citrobacter_freundii/Dashboard/islands.html">Islands</a>
+      <p>Where each resistance gene sits: 46,921 islands with gene maps, architecture types and aligned views per family or antibiotic class.</p></li>
+    <li><a class="page" href="Citrobacter_freundii/Dashboard/clusters.html">Gene families</a>
+      <p>806 analysed families with predicted folds, per-position variation, Pfam domains and Foldseek matches; the whole pangenome searchable.</p></li>
+    <li><a class="page" href="Citrobacter_freundii/Dashboard/antibiograms.html">Antibiograms</a>
+      <p>Measured susceptibility for 75 isolates beside their resistance genotype, per antibiotic and per isolate.</p></li>
+  </ul>
+  <footer>Pipeline, documentation and build scripts: <a href="https://github.com/Pedrolleao/amr-islands-dashboard">github.com/Pedrolleao/amr-islands-dashboard</a></footer>
+</main>
+</body>
+</html>
